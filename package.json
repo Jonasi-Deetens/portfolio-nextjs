@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "local-containers": "docker compose -f docker-compose.local.yaml up",
+    "local-containers-mac": "docker-compose -f docker-compose.local.yaml up",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

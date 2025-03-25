@@ -1,57 +1,36 @@
 "use client";
+
 import NavigationHeader from "./components/Navbar/NavigationHeader";
+import { MenuButton } from "./components/Elements/MenuButton";
 
 export default function Home() {
   return (
-    <main className="flex flex-col items-center justify-start min-h-screen bg-[#FAF3FF] dark:bg-[#090112] transition-colors duration-300">
+    <div className="relative w-full min-h-screen
+      bg-gradient-to-br from-[#131316] via-[#1a1a1f] to-[#0f0f12]
+      dark:from-[#000000] dark:via-[#0e0e0e] dark:to-[#050505]
+      text-white overflow-hidden transition-colors duration-500">
+
+      {/* Misty background texture */}
+      <div className="absolute inset-0 bg-mist bg-cover bg-center opacity-20 mix-blend-screen animate-mist pointer-events-none z-0" />
+      <div className="absolute inset-0 backdrop-blur-sm pointer-events-none z-0" />
+
+      {/* Navigation Header */}
       <NavigationHeader />
 
-      <div className="h-screen w-full max-w-[1200px] m-auto flex flex-col justify-center items-center">
-        {/* Row of 3 divs */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4 md:px-0 mt-12 w-full">
-          {/* Card 1 */}
-          <div
-            className="group relative bg-gradient-to-br from-[#FF7EB3] via-[#845EC2] to-[#2C003E] 
-      dark:from-[#6A0572] dark:via-[#2D033B] dark:to-[#0D001A] 
-      p-6 rounded-2xl shadow-lg border transition-all
-      hover:scale-[1.03] hover:shadow-[#ff7eb3]/40"
-          >
-            <h3 className="text-xl font-bold text-white">Card 1</h3>
-            <p className="text-gray-300 mt-2 text-sm">
-              A beautifully styled card with a futuristic gradient and smooth
-              effect.
-            </p>
-          </div>
-
-          {/* Card 2 */}
-          <div
-            className="group relative bg-gradient-to-br from-[#6B72FF] via-[#845EC2] to-[#2C003E] 
-      dark:from-[#542C85] dark:via-[#350068] dark:to-[#10002D] 
-      p-6 rounded-2xl shadow-lg border transition-all
-      hover:scale-[1.03] hover:shadow-[#6B72FF]/40"
-          >
-            <h3 className="text-xl font-bold text-white">Card 2</h3>
-            <p className="text-gray-300 mt-2 text-sm">
-              Smooth animations and polished colors make this design feel
-              modern.
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div
-            className="group relative bg-gradient-to-br from-[#FFD700] via-[#845EC2] to-[#2C003E] 
-      dark:from-[#FF6B00] dark:via-[#8F2D56] dark:to-[#240046] 
-      p-6 rounded-2xl shadow-lg border transition-all
-      hover:scale-[1.03] hover:shadow-[#FFD700]/40"
-          >
-            <h3 className="text-xl font-bold text-white">Card 3</h3>
-            <p className="text-gray-300 mt-2 text-sm">
-              This design follows modern UI/UX trends with depth, glow, and
-              responsiveness.
-            </p>
+      {/* Game Menu Panel */}
+      <main className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
+        <div className="max-w-md w-full bg-black/60 dark:bg-black/80 backdrop-blur-lg rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.5)] p-8 border border-white/10 mt-32">
+          <h1 className="text-4xl font-bold tracking-wide mb-8 text-center drop-shadow-lg text-white">
+            ⚔️ Shadowpath
+          </h1>
+          <div className="space-y-4">
+            <MenuButton label="Start New Game" onClick={() => alert("Start")} />
+            <MenuButton label="Continue" onClick={() => alert("Continue")} />
+            <MenuButton label="Settings" onClick={() => alert("Settings")} />
+            <MenuButton label="Credits" onClick={() => alert("Credits")} />
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
