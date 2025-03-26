@@ -64,6 +64,13 @@ export const characterRouter = t.router({
         },
       });
 
+      await prisma.player.create({
+        data: {
+          character: { connect: { id: character.id } },
+          user: { connect: { id: "5ae8a3cd-1e79-4f6d-b685-45fe96a9e6e8" } },
+        },
+      });
+
       // Optional: clone maps, tiles, template NPCs here (can move to a separate service)
       const templateMaps = await prisma.templateMap.findMany({
         where: { templateId: storyTemplateId },
@@ -162,5 +169,20 @@ export const characterRouter = t.router({
         characterId: character.id,
         playthroughId: playthrough.id,
       };
+    }),
+  getPlayerCharacters: t.procedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      return await prisma.character.findMany({
+        where: {
+          isPlayer: true,
+          playerData: {
+            userId: input.id,
+          },
+        },
+        include: {
+          stat: true,
+        },
+      });
     }),
 });

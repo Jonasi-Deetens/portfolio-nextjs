@@ -4,6 +4,8 @@ import { FC } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { trpc } from "../../../../utils/trpc";
+import { useUser } from "../../../context/UserContext";
+import { useRouter } from "next/navigation";
 
 interface CharacterFormValues {
   name: string;
@@ -16,18 +18,6 @@ interface CharacterFormValues {
   userId: string;
   storyTemplateId: number;
 }
-
-const initialValues: CharacterFormValues = {
-  name: "",
-  class: "",
-  strength: 5,
-  agility: 5,
-  intellect: 5,
-  charisma: 5,
-  luck: 5,
-  storyTemplateId: 0,
-  userId: "5ae8a3cd-1e79-4f6d-b685-45fe96a9e6e8",
-};
 
 const validationSchema = Yup.object({
   name: Yup.string().min(2).max(32).required("Name is required"),
@@ -42,9 +32,23 @@ const validationSchema = Yup.object({
 });
 
 export const CharacterCreationForm: FC = () => {
+  const { user } = useUser();
+  const router = useRouter();
   const createCharacter = trpc.character.createCharacter.useMutation();
   const storieTemplatesQuery = trpc.story.getStoryTemplates.useQuery();
   const storieTemplates = storieTemplatesQuery.data;
+
+  const initialValues: CharacterFormValues = {
+    name: "",
+    class: "",
+    strength: 5,
+    agility: 5,
+    intellect: 5,
+    charisma: 5,
+    luck: 5,
+    storyTemplateId: 0,
+    userId: user?.id || "",
+  };
 
   const handleSubmit = async (values: CharacterFormValues) => {
     try {
@@ -53,6 +57,8 @@ export const CharacterCreationForm: FC = () => {
         storyTemplateId: +values.storyTemplateId || 0,
       });
       console.log("Character created:", data);
+
+      router.push("/character-select");
     } catch (error) {
       console.error("TRPC error:", error);
     }

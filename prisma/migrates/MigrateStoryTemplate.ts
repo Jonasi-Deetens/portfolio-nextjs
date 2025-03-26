@@ -1,14 +1,20 @@
 import { ObjectType, PrismaClient, TileType } from "@prisma/client";
+import bcrypt from "bcrypt";
+
 const prisma = new PrismaClient();
 
 async function seedStoryTemplate() {
   console.log("🌱 Seeding story template...");
+
+  const password = "test1234";
+  const passwordHash = await bcrypt.hash(password, 10);
 
   await prisma.user.create({
     data: {
       id: "5ae8a3cd-1e79-4f6d-b685-45fe96a9e6e8",
       name: "jonasi",
       email: "jonasi@inksane.be",
+      passwordHash,
     },
   });
 
