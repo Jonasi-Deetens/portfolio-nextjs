@@ -8,7 +8,203 @@ datasource db {
 }
 
 model User {
-  id    String  @id @default(uuid())
-  email String  @unique
-  name  String?
+  id           String             @id @default(uuid())
+  email        String             @unique
+  name         String?
+  playthroughs StoryPlaythrough[]
+}
+
+enum TileType {
+  GRASS
+  WATER
+  SAND
+  MOUNTAIN
+  FOREST
+  ROAD
+}
+
+enum ObjectType {
+  CHEST
+  TREE
+  ROCK
+  HOUSE
+  PORTAL
+  SIGN
+  DOOR
+}
+
+model StoryTemplate {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  playthroughs StoryPlaythrough[]
+  maps         TemplateMap[]
+}
+
+model TemplateMap {
+  id     Int    @id @default(autoincrement())
+  name   String
+  width  Int
+  height Int
+
+  storyTemplate StoryTemplate @relation(fields: [templateId], references: [id])
+  templateId    Int
+
+  templateTiles      TemplateTile[]
+  templateCharacters TemplateCharacter[]
+}
+
+model TemplateTile {
+  id    Int      @id @default(autoincrement())
+  x     Int
+  y     Int
+  layer Int
+  type  TileType
+
+  map             TemplateMap      @relation(fields: [mapId], references: [id])
+  mapId           Int
+  templateObjects TemplateObject[]
+}
+
+model TemplateCharacter {
+  id       Int     @id @default(autoincrement())
+  name     String
+  isPlayer Boolean @default(false)
+  stats    Json // { hp, strength, etc. }
+  behavior Json?
+
+  x     Int
+  y     Int
+  layer Int
+
+  map   TemplateMap @relation(fields: [mapId], references: [id])
+  mapId Int
+}
+
+model TemplateObject {
+  id         Int        @id @default(autoincrement())
+  type       ObjectType
+  name       String
+  properties Json
+
+  tile   TemplateTile @relation(fields: [tileId], references: [id])
+  tileId Int
+}
+
+model StoryPlaythrough {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  name      String
+
+  storyTemplate   StoryTemplate @relation(fields: [storyTemplateId], references: [id])
+  storyTemplateId Int
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  character   Character? @relation("PlaythroughPlayer", fields: [characterId], references: [id])
+  characterId Int?       @unique
+
+  maps       Map[]
+  characters Character[] @relation("PlaythroughCharacters")
+}
+
+model Map {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  width       Int
+  height      Int
+  createdAt   DateTime @default(now())
+
+  playthrough   StoryPlaythrough @relation(fields: [playthroughId], references: [id])
+  playthroughId Int
+
+  tiles      Tile[]
+  characters Character[]
+}
+
+model Tile {
+  id    Int      @id @default(autoincrement())
+  x     Int
+  y     Int
+  layer Int
+  type  TileType
+
+  map   Map @relation(fields: [mapId], references: [id])
+  mapId Int
+
+  objects    GameObject[]
+  characters Character[]  @relation("CharacterTile")
+
+  createdAt DateTime @default(now())
+
+  @@unique([x, y, layer, mapId])
+}
+
+model GameObject {
+  id         Int        @id @default(autoincrement())
+  type       ObjectType
+  name       String
+  properties Json
+
+  tile   Tile @relation(fields: [tileId], references: [id])
+  tileId Int
+
+  createdAt DateTime @default(now())
+}
+
+model Character {
+  id       Int     @id @default(autoincrement())
+  name     String
+  isPlayer Boolean @default(false)
+
+  stat   Stat? @relation("CharacterStat", fields: [statId], references: [id])
+  statId Int?  @unique
+
+  tile   Tile? @relation("CharacterTile", fields: [tileId], references: [id])
+  tileId Int?
+
+  map   Map? @relation(fields: [mapId], references: [id])
+  mapId Int?
+
+  playthrough   StoryPlaythrough @relation("PlaythroughCharacters", fields: [playthroughId], references: [id])
+  playthroughId Int
+
+  playerData Player? @relation("PlayerData")
+  npcData    NPC?    @relation("NPCData")
+
+  createdAt        DateTime          @default(now())
+  StoryPlaythrough StoryPlaythrough? @relation("PlaythroughPlayer")
+}
+
+model Stat {
+  id           Int @id @default(autoincrement())
+  hp           Int
+  maxHp        Int
+  strength     Int
+  agility      Int
+  charisma     Int
+  intelligence Int
+  luck         Int
+
+  character Character? @relation("CharacterStat")
+}
+
+model Player {
+  id          Int       @id @default(autoincrement())
+  character   Character @relation("PlayerData", fields: [characterId], references: [id])
+  characterId Int       @unique
+
+  userId String
+}
+
+model NPC {
+  id          Int       @id @default(autoincrement())
+  character   Character @relation("NPCData", fields: [characterId], references: [id])
+  characterId Int       @unique
+
+  behavior Json
 }

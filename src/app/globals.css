@@ -3,7 +3,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
@@ -123,5 +122,35 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+/* -------------- ANIMATIONS -------------- */
+/* MIST ANIMATION */
+@layer utilities {
+  @keyframes floating-mist {
+    0% {
+      transform: translate(0%, 0%) scale(1);
+      opacity: 0.15;
+    }
+    25% {
+      transform: translate(10%, -5%) scale(1.05);
+      opacity: 0.2;
+    }
+    50% {
+      transform: translate(-5%, 5%) scale(0.95);
+      opacity: 0.12;
+    }
+    75% {
+      transform: translate(5%, 0%) scale(1.1);
+      opacity: 0.18;
+    }
+    100% {
+      transform: translate(0%, 0%) scale(1);
+      opacity: 0.15;
+    }
+  }
+
+  .floating-mist {
+    animation: floating-mist 80s ease-in-out infinite;
   }
 }
