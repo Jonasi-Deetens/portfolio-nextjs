@@ -1,25 +1,21 @@
 import Link from "next/link";
-import { cn } from "../../../lib/utils";
 
-const NavLink = ({
-  href,
-  children,
-}: {
+interface NavLinkProps {
   href: string;
   children: React.ReactNode;
-}) => {
+}
+
+const NavLink = ({ href, children }: NavLinkProps) => {
   return (
     <Link
       href={href}
-      className={cn(
-        "relative text-white dark:text-gray-200 font-semibold px-3 py-1 transition-all",
-        "hover:text-[#FFD700] dark:hover:text-[#FFA500]",
-        "focus:text-[#FF6B6B] dark:focus:text-[#FF4081]",
-        "group"
-      )}
+      className="px-4 py-2 rounded-xl text-sm font-medium
+        bg-white/70 hover:bg-white/80 text-gray-900
+        dark:bg-white/10 dark:hover:bg-white/20 dark:text-white
+        border border-gray-300 dark:border-white/20
+        shadow-inner hover:shadow-md transition-all duration-150"
     >
       {children}
-      <span className="absolute left-0 bottom-0 w-full h-0.5 bg-gradient-to-r from-[#FF6B6B] via-[#845EC2] to-[#D65DB1] dark:from-[#FF4081] dark:via-[#845EC2] dark:to-[#2C003E] scale-x-0 transition-transform duration-300 ease-in-out group-hover:scale-x-100"></span>
     </Link>
   );
 };
