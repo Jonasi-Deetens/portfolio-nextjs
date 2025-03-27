@@ -1,23 +1,24 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { useUser } from "../../context/UserContext";
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export const withAuth = <P extends object>(
   Component: React.ComponentType<P>
 ): React.FC<P> => {
   const Wrapped: React.FC<P> = (props) => {
-    const { user } = useUser();
+    const { data: session, status } = useSession();
     const router = useRouter();
 
     useEffect(() => {
-      if (!user) {
-        router.push("/login");
+      if (status === 'unauthenticated') {
+        router.push('/login');
       }
-    }, [user, router]);
+    }, [status, router]);
 
-    if (!user) return null;
+    if (status === 'loading') return null;
+    if (!session?.user) return null;
 
     return <Component {...props} />;
   };

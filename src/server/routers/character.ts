@@ -10,7 +10,7 @@ export const characterRouter = t.router({
   createCharacter: t.procedure
     .input(
       z.object({
-        userId: z.string().uuid(),
+        userId: z.string(),
         storyTemplateId: z.number(),
         name: z.string().min(2).max(50),
         strength: z.number().min(1).max(20),
@@ -32,143 +32,148 @@ export const characterRouter = t.router({
         luck,
       } = input;
 
+      try {
       // Step 1: Create Stat
-      const stat = await prisma.stat.create({
-        data: {
-          hp: 10 + strength,
-          maxHp: 10 + strength,
-          strength,
-          agility,
-          intelligence: intellect,
-          charisma,
-          luck,
-        },
-      });
-
-      // Step 2: Create StoryPlaythrough
-      const playthrough = await prisma.storyPlaythrough.create({
-        data: {
-          name: `${name}'s Adventure`,
-          storyTemplateId: storyTemplateId,
-          userId,
-        },
-      });
-
-      // Step 3: Create Character
-      const character = await prisma.character.create({
-        data: {
-          name,
-          isPlayer: true,
-          stat: { connect: { id: stat.id } },
-          playthrough: { connect: { id: playthrough.id } },
-        },
-      });
-
-      await prisma.player.create({
-        data: {
-          character: { connect: { id: character.id } },
-          user: { connect: { id: "5ae8a3cd-1e79-4f6d-b685-45fe96a9e6e8" } },
-        },
-      });
-
-      // Optional: clone maps, tiles, template NPCs here (can move to a separate service)
-      const templateMaps = await prisma.templateMap.findMany({
-        where: { templateId: storyTemplateId },
-        include: {
-          templateTiles: { include: { templateObjects: true } },
-          templateCharacters: true,
-        },
-      });
-
-      for (const templateMap of templateMaps) {
-        // Clone map
-        const map = await prisma.map.create({
+        const stat = await prisma.stat.create({
           data: {
-            name: templateMap.name,
-            width: templateMap.width,
-            height: templateMap.height,
-            playthroughId: playthrough.id,
+            hp: 10 + strength,
+            maxHp: 10 + strength,
+            strength,
+            agility,
+            intelligence: intellect,
+            charisma,
+            luck,
           },
         });
 
-        // Clone tiles
-        await prisma.tile.createMany({
-          data: templateMap.templateTiles.map((tile) => ({
-            x: tile.x,
-            y: tile.y,
-            layer: tile.layer,
-            type: tile.type,
-            mapId: map.id,
-          })),
+        // Step 2: Create StoryPlaythrough
+        const playthrough = await prisma.storyPlaythrough.create({
+          data: {
+            name: `${name}'s Adventure`,
+            storyTemplateId: storyTemplateId,
+            userId,
+          },
         });
 
-        // Create character lookup for tile reference
-        const tileMap = new Map<string, number>();
-        const tiles = await prisma.tile.findMany({
-          where: { mapId: map.id },
+        // Step 3: Create Character
+        const character = await prisma.character.create({
+          data: {
+            name,
+            isPlayer: true,
+            stat: { connect: { id: stat.id } },
+            playthrough: { connect: { id: playthrough.id } },
+          },
         });
-        for (const tile of tiles) {
-          tileMap.set(`${tile.x}:${tile.y}:${tile.layer}`, tile.id);
-        }
 
-        // Clone NPCs
-        for (const npc of templateMap.templateCharacters) {
-          const stats = npc.stats as Stat;
-          const npcStat = await prisma.stat.create({
+        await prisma.player.create({
+          data: {
+            character: { connect: { id: character.id } },
+            user: { connect: { id: input.userId } },
+          },
+        });
+
+        // Optional: clone maps, tiles, template NPCs here (can move to a separate service)
+        const templateMaps = await prisma.templateMap.findMany({
+          where: { templateId: storyTemplateId },
+          include: {
+            templateTiles: { include: { templateObjects: true } },
+            templateCharacters: true,
+          },
+        });
+
+        for (const templateMap of templateMaps) {
+          // Clone map
+          const map = await prisma.map.create({
             data: {
-              hp: stats.hp,
-              maxHp: stats.maxHp,
-              strength: stats.strength,
-              agility: stats.agility,
-              charisma: stats.charisma,
-              intelligence: stats.intelligence,
-              luck: stats.luck,
+              name: templateMap.name,
+              width: templateMap.width,
+              height: templateMap.height,
+              playthroughId: playthrough.id,
             },
           });
 
-          const tileId = tileMap.get(`${npc.x}:${npc.y}:${npc.layer}`) ?? null;
-          if (!tileId) continue;
-
-          await prisma.character.create({
-            data: {
-              name: npc.name,
-              isPlayer: false,
-              stat: { connect: { id: npcStat.id } },
-              playthrough: { connect: { id: playthrough.id } },
-              map: { connect: { id: map.id } },
-              tile: { connect: { id: tileId } },
-              npcData: {
-                create: {
-                  behavior: npc.behavior ?? {},
-                },
-              },
-            },
+          // Clone tiles
+          await prisma.tile.createMany({
+            data: templateMap.templateTiles.map((tile) => ({
+              x: tile.x,
+              y: tile.y,
+              layer: tile.layer,
+              type: tile.type,
+              mapId: map.id,
+            })),
           });
-        }
 
-        // Clone objects
-        for (const tile of templateMap.templateTiles) {
-          const tileId = tileMap.get(`${tile.x}:${tile.y}:${tile.layer}`);
-          if (!tileId) continue;
+          // Create character lookup for tile reference
+          const tileMap = new Map<string, number>();
+          const tiles = await prisma.tile.findMany({
+            where: { mapId: map.id },
+          });
+          for (const tile of tiles) {
+            tileMap.set(`${tile.x}:${tile.y}:${tile.layer}`, tile.id);
+          }
 
-          for (const obj of tile.templateObjects) {
-            await prisma.gameObject.create({
+          // Clone NPCs
+          for (const npc of templateMap.templateCharacters) {
+            const stats = npc.stats as Stat;
+            const npcStat = await prisma.stat.create({
               data: {
-                name: obj.name,
-                type: obj.type,
-                properties: obj.properties as Prisma.InputJsonValue,
-                tileId,
+                hp: stats.hp,
+                maxHp: stats.maxHp,
+                strength: stats.strength,
+                agility: stats.agility,
+                charisma: stats.charisma,
+                intelligence: stats.intelligence,
+                luck: stats.luck,
+              },
+            });
+
+            const tileId = tileMap.get(`${npc.x}:${npc.y}:${npc.layer}`) ?? null;
+            if (!tileId) continue;
+
+            await prisma.character.create({
+              data: {
+                name: npc.name,
+                isPlayer: false,
+                stat: { connect: { id: npcStat.id } },
+                playthrough: { connect: { id: playthrough.id } },
+                map: { connect: { id: map.id } },
+                tile: { connect: { id: tileId } },
+                npcData: {
+                  create: {
+                    behavior: npc.behavior ?? {},
+                  },
+                },
               },
             });
           }
-        }
-      }
 
-      return {
-        success: true,
-        characterId: character.id,
-        playthroughId: playthrough.id,
-      };
+          // Clone objects
+          for (const tile of templateMap.templateTiles) {
+            const tileId = tileMap.get(`${tile.x}:${tile.y}:${tile.layer}`);
+            if (!tileId) continue;
+
+            for (const obj of tile.templateObjects) {
+              await prisma.gameObject.create({
+                data: {
+                  name: obj.name,
+                  type: obj.type,
+                  properties: obj.properties as Prisma.InputJsonValue,
+                  tileId,
+                },
+              });
+            }
+          }
+        }
+
+        return {
+          success: true,
+          characterId: character.id,
+          playthroughId: playthrough.id,
+        }; 
+      } catch (error) {
+          console.error('❌ Error in createCharacter:', error);
+          throw error;
+      }
     }),
   getPlayerCharacters: t.procedure
     .input(z.object({ id: z.string() }))

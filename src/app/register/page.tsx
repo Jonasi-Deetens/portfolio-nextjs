@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
-import { trpc } from "@/utils/trpc";
-import { useRouter } from "next/navigation";
-import { Formik, Form, Field, ErrorMessage } from "formik";
-import * as Yup from "yup";
-import { useUser } from "../context/UserContext";
+import { trpc } from '@/utils/trpc';
+import { useRouter } from 'next/navigation';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
+import { signIn } from 'next-auth/react';
+import { TrpcError } from '../types/types';
 
 interface RegisterFormValues {
   name: string;
@@ -14,27 +15,24 @@ interface RegisterFormValues {
 }
 
 const initialValues: RegisterFormValues = {
-  name: "",
-  email: "",
-  password: "",
-  confirmPassword: "",
+  name: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
 };
 
 const validationSchema = Yup.object({
-  name: Yup.string().min(2).max(32).required("Name is required"),
-  email: Yup.string().email("Invalid email").required("Email is required"),
-  password: Yup.string().min(6).required("Password is required"),
+  name: Yup.string().min(2).max(32).required('Name is required'),
+  email: Yup.string().email('Invalid email').required('Email is required'),
+  password: Yup.string().min(6).required('Password is required'),
   confirmPassword: Yup.string()
-    .oneOf([Yup.ref("password")], "Passwords must match")
-    .required("Please confirm your password"),
+    .oneOf([Yup.ref('password')], 'Passwords must match')
+    .required('Please confirm your password'),
 });
 
 const RegisterPage = () => {
-  const { login } = useUser();
+  const registerMutation = trpc.auth.createUser.useMutation();
   const router = useRouter();
-
-  const registerMutation = trpc.auth.register.useMutation();
-  const loginMutation = trpc.auth.login.useMutation();
 
   const handleSubmit = async (values: RegisterFormValues) => {
     try {
@@ -44,15 +42,20 @@ const RegisterPage = () => {
         name: values.name,
       });
 
-      const user = await loginMutation.mutateAsync({
+      const res = await signIn('credentials', {
         email: values.email,
         password: values.password,
+        redirect: false,
       });
 
-      login(user);
-      router.push("/game-menu");
-    } catch (err: any) {
-      alert(err.message || "Something went wrong");
+      if (res?.ok) {
+        router.push('/game-menu');
+      } else {
+        alert('Login failed after registration');
+      }
+    } catch (err: unknown) {
+      const error = err as TrpcError;
+      alert(error.message || 'Something went wrong');
     }
   };
 
@@ -73,11 +76,7 @@ const RegisterPage = () => {
                 placeholder="Name"
                 className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-md text-white"
               />
-              <ErrorMessage
-                name="name"
-                component="div"
-                className="text-red-400 text-sm mt-1"
-              />
+              <ErrorMessage name="name" component="div" className="text-red-400 text-sm mt-1" />
             </div>
 
             <div>
@@ -87,11 +86,7 @@ const RegisterPage = () => {
                 placeholder="Email"
                 className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-md text-white"
               />
-              <ErrorMessage
-                name="email"
-                component="div"
-                className="text-red-400 text-sm mt-1"
-              />
+              <ErrorMessage name="email" component="div" className="text-red-400 text-sm mt-1" />
             </div>
 
             <div>
@@ -101,11 +96,7 @@ const RegisterPage = () => {
                 placeholder="Password"
                 className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-md text-white"
               />
-              <ErrorMessage
-                name="password"
-                component="div"
-                className="text-red-400 text-sm mt-1"
-              />
+              <ErrorMessage name="password" component="div" className="text-red-400 text-sm mt-1" />
             </div>
 
             <div>
@@ -122,15 +113,12 @@ const RegisterPage = () => {
               />
             </div>
 
-            <button
-              type="submit"
-              className="w-full py-2 bg-white/20 hover:bg-white/30 rounded-md"
-            >
+            <button type="submit" className="w-full py-2 bg-white/20 hover:bg-white/30 rounded-md">
               Register
             </button>
 
             <p className="text-sm text-white/60 mt-4 text-center">
-              Already have an account?{" "}
+              Already have an account?{' '}
               <a href="/login" className="underline hover:text-white">
                 Log in
               </a>

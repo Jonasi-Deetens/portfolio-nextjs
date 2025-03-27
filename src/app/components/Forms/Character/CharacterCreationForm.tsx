@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { FC } from "react";
-import { Formik, Form, Field, ErrorMessage } from "formik";
-import * as Yup from "yup";
-import { trpc } from "../../../../utils/trpc";
-import { useUser } from "../../../context/UserContext";
-import { useRouter } from "next/navigation";
+import { FC } from 'react';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
+import { trpc } from '../../../../utils/trpc';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 interface CharacterFormValues {
   name: string;
@@ -20,10 +20,8 @@ interface CharacterFormValues {
 }
 
 const validationSchema = Yup.object({
-  name: Yup.string().min(2).max(32).required("Name is required"),
-  class: Yup.string()
-    .oneOf(["Warrior", "Rogue", "Mage"])
-    .required("Class is required"),
+  name: Yup.string().min(2).max(32).required('Name is required'),
+  class: Yup.string().oneOf(['Warrior', 'Rogue', 'Mage']).required('Class is required'),
   strength: Yup.number().min(1).max(20).required(),
   agility: Yup.number().min(1).max(20).required(),
   intellect: Yup.number().min(1).max(20).required(),
@@ -32,22 +30,22 @@ const validationSchema = Yup.object({
 });
 
 export const CharacterCreationForm: FC = () => {
-  const { user } = useUser();
+  const { data: session } = useSession();
   const router = useRouter();
   const createCharacter = trpc.character.createCharacter.useMutation();
   const storieTemplatesQuery = trpc.story.getStoryTemplates.useQuery();
   const storieTemplates = storieTemplatesQuery.data;
 
   const initialValues: CharacterFormValues = {
-    name: "",
-    class: "",
+    name: '',
+    class: '',
     strength: 5,
     agility: 5,
     intellect: 5,
     charisma: 5,
     luck: 5,
     storyTemplateId: 0,
-    userId: user?.id || "",
+    userId: session?.user?.id || '',
   };
 
   const handleSubmit = async (values: CharacterFormValues) => {
@@ -56,11 +54,11 @@ export const CharacterCreationForm: FC = () => {
         ...values,
         storyTemplateId: +values.storyTemplateId || 0,
       });
-      console.log("Character created:", data);
+      console.log('Character created:', data);
 
-      router.push("/character-select");
+      router.push('/character-select');
     } catch (error) {
-      console.error("TRPC error:", error);
+      console.error('TRPC error:', error);
     }
   };
 
@@ -84,11 +82,7 @@ export const CharacterCreationForm: FC = () => {
               name="name"
               className="w-full px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30"
             />
-            <ErrorMessage
-              name="name"
-              component="div"
-              className="text-red-400 text-sm mt-1"
-            />
+            <ErrorMessage name="name" component="div" className="text-red-400 text-sm mt-1" />
           </div>
 
           <div>
@@ -105,11 +99,7 @@ export const CharacterCreationForm: FC = () => {
               <option value="Rogue">Rogue</option>
               <option value="Mage">Mage</option>
             </Field>
-            <ErrorMessage
-              name="class"
-              component="div"
-              className="text-red-400 text-sm mt-1"
-            />
+            <ErrorMessage name="class" component="div" className="text-red-400 text-sm mt-1" />
           </div>
 
           <div>
@@ -128,11 +118,7 @@ export const CharacterCreationForm: FC = () => {
                 </option>
               ))}
             </Field>
-            <ErrorMessage
-              name="class"
-              component="div"
-              className="text-red-400 text-sm mt-1"
-            />
+            <ErrorMessage name="class" component="div" className="text-red-400 text-sm mt-1" />
           </div>
 
           <div className="grid grid-cols-3 gap-4">

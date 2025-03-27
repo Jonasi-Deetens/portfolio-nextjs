@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import NavigationHeader from "../components/Navbar/NavigationHeader";
-import { MenuButton } from "../components/Elements/MenuButton";
-import { withAuth } from "../components/Auth/withAuth";
+import { useRouter } from 'next/navigation';
+import NavigationHeader from '../components/Navbar/NavigationHeader';
+import { withAuth } from '../components/Auth/withAuth';
+import { MenuButton } from '../components/Elements/Buttons/MenuButton';
 
 const GameMenuPage = () => {
   const router = useRouter();
 
   const handleNewGame = () => {
-    router.push("/new-game");
+    router.push('/new-game');
   };
 
   const handleContinueGame = () => {
-    router.push("/character-select");
+    router.push('/character-select');
   };
 
   return (
@@ -40,8 +40,8 @@ const GameMenuPage = () => {
           <div className="space-y-4">
             <MenuButton label="Start New Game" onClick={handleNewGame} />
             <MenuButton label="Continue" onClick={handleContinueGame} />
-            <MenuButton label="Settings" onClick={() => alert("Settings")} />
-            <MenuButton label="Credits" onClick={() => alert("Credits")} />
+            <MenuButton label="Settings" onClick={() => alert('Settings')} />
+            <MenuButton label="Credits" onClick={() => alert('Credits')} />
           </div>
         </div>
       </main>
