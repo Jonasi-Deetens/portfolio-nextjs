@@ -1,30 +1,30 @@
-'use client';
+"use client";
 
-import { FC } from 'react';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
-import { trpc } from '../../../../utils/trpc';
-import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { FC } from "react";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
+import { trpc } from "../../../../utils/trpc";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { Button } from "../../Elements/Buttons/Button";
+import { FormikSelect } from "../../Elements/Formik/FormikSelect";
+import { FormikStatControls } from "../../Elements/Formik/FormikStatControls";
 
-interface CharacterFormValues {
-  name: string;
-  class: string;
-  strength: number;
-  agility: number;
-  intellect: number;
-  charisma: number;
-  luck: number;
-  userId: string;
-  storyTemplateId: number;
-}
+export const CLASS_OPTIONS = [
+  { label: "Warrior", value: "Warrior" },
+  { label: "Rogue", value: "Rogue" },
+  { label: "Mage", value: "Mage" },
+];
 
 const validationSchema = Yup.object({
-  name: Yup.string().min(2).max(32).required('Name is required'),
-  class: Yup.string().oneOf(['Warrior', 'Rogue', 'Mage']).required('Class is required'),
+  name: Yup.string().min(2).max(32).required("Name is required"),
+  class: Yup.string()
+    .oneOf(CLASS_OPTIONS.map((opt) => opt.value))
+    .required("Class is required"),
+  storyTemplateId: Yup.number().min(1).required("Story is required"),
   strength: Yup.number().min(1).max(20).required(),
   agility: Yup.number().min(1).max(20).required(),
-  intellect: Yup.number().min(1).max(20).required(),
+  intelligence: Yup.number().min(1).max(20).required(),
   charisma: Yup.number().min(1).max(20).required(),
   luck: Yup.number().min(1).max(20).required(),
 });
@@ -33,133 +33,92 @@ export const CharacterCreationForm: FC = () => {
   const { data: session } = useSession();
   const router = useRouter();
   const createCharacter = trpc.character.createCharacter.useMutation();
-  const storieTemplatesQuery = trpc.story.getStoryTemplates.useQuery();
-  const storieTemplates = storieTemplatesQuery.data;
+  const { data: storyTemplates } = trpc.story.getStoryTemplates.useQuery();
 
-  const initialValues: CharacterFormValues = {
-    name: '',
-    class: '',
-    strength: 5,
-    agility: 5,
-    intellect: 5,
-    charisma: 5,
-    luck: 5,
-    storyTemplateId: 0,
-    userId: session?.user?.id || '',
+  const initialValues = {
+    name: "",
+    class: CLASS_OPTIONS[0].value,
+    storyTemplateId: storyTemplates?.[0]?.id || 0,
+    strength: 8,
+    agility: 4,
+    intelligence: 2,
+    charisma: 3,
+    luck: 3,
   };
 
-  const handleSubmit = async (values: CharacterFormValues) => {
+  const handleSubmit = async (values: typeof initialValues) => {
     try {
-      const data = await createCharacter.mutateAsync({
+      if (!session?.user?.id) throw new Error("User not authenticated");
+      const character = await createCharacter.mutateAsync({
         ...values,
-        storyTemplateId: +values.storyTemplateId || 0,
+        userId: session.user.id,
+        storyTemplateId: +values.storyTemplateId,
       });
-      console.log('Character created:', data);
 
-      router.push('/character-select');
-    } catch (error) {
-      console.error('TRPC error:', error);
+      localStorage.setItem(
+        "selectedCharacterId",
+        String(character?.characterId)
+      );
+
+      router.push("/character-select");
+    } catch (err) {
+      console.error("Character creation failed:", err);
     }
   };
 
   return (
-    <div className="relative max-w-md w-full bg-black/60 dark:bg-black/80 backdrop-blur-lg rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.5)] p-8 border border-white/10 mt-8 mx-auto">
-      <h2 className="text-3xl font-bold text-white mb-6 text-center drop-shadow">
-        🛡️ Character Creation
-      </h2>
+    <div className="max-w-xl mx-auto mt-12 p-6 bg-white/60 dark:bg-black/70 backdrop-blur-md rounded-2xl border border-white/10 shadow-lg text-white">
+      <h1 className="text-3xl font-bold text-center mb-8">
+        🛡️ Create Your Hero
+      </h1>
 
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
+        enableReinitialize
       >
-        <Form className="space-y-6 text-white">
+        <Form className="space-y-6">
           <div>
-            <label htmlFor="name" className="block font-medium mb-1">
+            <label htmlFor="name" className="block font-semibold mb-1">
               Name
             </label>
             <Field
               name="name"
-              className="w-full px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30"
+              className="w-full bg-white/70 hover:bg-white/80 dark:bg-white/10 dark:hover:bg-white/20 
+            border border-gray-300 dark:border-white/20 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-white/30"
             />
-            <ErrorMessage name="name" component="div" className="text-red-400 text-sm mt-1" />
+            <ErrorMessage
+              name="name"
+              className="text-red-400 text-sm mt-1"
+              component="div"
+            />
           </div>
 
           <div>
-            <label htmlFor="class" className="block font-medium mb-1">
-              Class
-            </label>
-            <Field
-              as="select"
-              name="class"
-              className="w-full px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30"
-            >
-              <option value="">Select a class</option>
-              <option value="Warrior">Warrior</option>
-              <option value="Rogue">Rogue</option>
-              <option value="Mage">Mage</option>
-            </Field>
-            <ErrorMessage name="class" component="div" className="text-red-400 text-sm mt-1" />
+            <FormikSelect name="class" label="Class" options={CLASS_OPTIONS} />
           </div>
 
           <div>
-            <label htmlFor="story" className="block font-medium mb-1">
-              Story
-            </label>
-            <Field
-              as="select"
+            <FormikSelect
               name="storyTemplateId"
-              className="w-full px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30"
-            >
-              <option value="">Select a story</option>
-              {storieTemplates?.map((story) => (
-                <option key={`story-${story.id}`} value={story.id}>
-                  {story.name}
-                </option>
-              ))}
-            </Field>
-            <ErrorMessage name="class" component="div" className="text-red-400 text-sm mt-1" />
+              label="Story"
+              options={
+                storyTemplates?.map((story) => ({
+                  label: story.name,
+                  value: story.id,
+                })) ?? []
+              }
+            />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label htmlFor="strength" className="block mb-1 font-medium">
-                Strength
-              </label>
-              <Field
-                type="number"
-                name="strength"
-                className="w-full px-3 py-2 bg-white/10 text-white border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30"
-              />
-            </div>
-            <div>
-              <label htmlFor="agility" className="block mb-1 font-medium">
-                Agility
-              </label>
-              <Field
-                type="number"
-                name="agility"
-                className="w-full px-3 py-2 bg-white/10 text-white border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30"
-              />
-            </div>
-            <div>
-              <label htmlFor="intellect" className="block mb-1 font-medium">
-                Intellect
-              </label>
-              <Field
-                type="number"
-                name="intellect"
-                className="w-full px-3 py-2 bg-white/10 text-white border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30"
-              />
-            </div>
+          <div>
+            <FormikStatControls />
           </div>
 
-          <button
-            type="submit"
-            className="w-full px-6 py-3 bg-white/70 hover:bg-white/80 dark:bg-white/10 dark:hover:bg-white/20 border border-gray-300 dark:border-white/20 rounded-xl transition-all duration-150 text-lg font-medium text-gray-900 dark:text-white shadow-inner hover:shadow-lg"
-          >
+          <Button className="w-full py-3 bg-white/80 hover:bg-white dark:bg-white/10 dark:hover:bg-white/20 border border-white/20 text-gray-900 dark:text-white rounded-xl font-medium transition-all shadow-inner hover:shadow-xl">
             Create Character
-          </button>
+          </Button>
         </Form>
       </Formik>
     </div>

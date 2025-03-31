@@ -1,46 +1,59 @@
-'use client';
+"use client";
 
-import { FC, useState } from 'react';
-import { trpc } from '../../../../utils/trpc';
-import { useSession } from 'next-auth/react';
-import { SCharacterWithStat } from '@/app/types/types';
+import { FC, useEffect } from "react";
+import { SCharacterWithStat } from "@/app/types/types";
+import { Button } from "../../Elements/Buttons/Button";
+import { useCharacter } from "../../../providers/CharacterProvider";
 
-interface PlayerCharacterSelectorProps {
-  onSelect: (characterId: number) => void;
-}
+export const PlayerCharacterSelector: FC = () => {
+  const {
+    characters,
+    selectedCharacter,
+    refreshCharacters,
+    setSelectedCharacter,
+    isLoading,
+    isError,
+  } = useCharacter();
 
-export const PlayerCharacterSelector: FC<PlayerCharacterSelectorProps> = ({ onSelect }) => {
-  const { data: session } = useSession();
-  const { data, isLoading, isError } = trpc.character.getPlayerCharacters.useQuery({
-    id: session?.user?.id || '',
-  });
+  useEffect(() => {
+    refreshCharacters();
+  }, [refreshCharacters]);
 
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  useEffect(() => {
+    const storedId = localStorage.getItem("selectedCharacterId");
+    if (storedId && characters) {
+      const found = characters.find((c) => c.id === Number(storedId));
+      if (found) {
+        setSelectedCharacter(found);
+      }
+    }
+  }, [characters, setSelectedCharacter, refreshCharacters]);
+
+  const handleSelect = (char: SCharacterWithStat) => {
+    setSelectedCharacter(char);
+    localStorage.setItem("selectedCharacterId", String(char.id));
+  };
 
   if (isLoading) return <p className="text-white">Loading characters...</p>;
-  if (isError || !data) return <p className="text-red-400">Failed to load characters.</p>;
+  if (isError || !characters)
+    return <p className="text-red-400">Failed to load characters.</p>;
 
   return (
-    <div className="space-y-6 max-w-xl mx-auto mt-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {data.map((char: SCharacterWithStat) => (
-          <button
+    <div className="mx-auto mt-12">
+      <div className="flex flex-wrap justify-center items-center max-w-xl">
+        {characters.map((char) => (
+          <Button
             key={char.id}
-            onClick={() => {
-              setSelectedId(char.id);
-              onSelect(char.id);
-            }}
-            className={`w-full p-4 rounded-xl border transition-all duration-200
-                ${
-                  selectedId === char.id
-                    ? 'border-white bg-white/10'
-                    : 'border-white/20 bg-white/5 hover:bg-white/10'
-                }`}
+            onClick={() => handleSelect(char)}
+            className={`${
+              selectedCharacter?.id === char.id && "!bg-gray-700"
+            } flex flex-col w-30 h-30 m-3`}
           >
             <h3 className="text-xl font-semibold text-white">{char.name}</h3>
-            <p className="text-sm text-white/70">HP: {char.stat?.hp ?? '-'}</p>
-            <p className="text-sm text-white/70">STR: {char.stat?.strength ?? '-'}</p>
-          </button>
+            <p className="text-sm text-white/70">
+              Level: {char.stat?.level ?? "-"}
+            </p>
+          </Button>
         ))}
       </div>
     </div>

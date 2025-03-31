@@ -3,7 +3,7 @@
 import { ThemeProvider } from "next-themes";
 import { ReactNode, useEffect, useState } from "react";
 
-export function ClientThemeProvider({ children }: { children: ReactNode }) {
+const ClientThemeProvider = ({ children }: { children: ReactNode }) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -19,4 +19,6 @@ export function ClientThemeProvider({ children }: { children: ReactNode }) {
       {children}
     </ThemeProvider>
   );
-}
+};
+
+export default ClientThemeProvider;

@@ -1,26 +1,44 @@
-'use client';
+"use client";
 
-import { FC, ReactNode } from 'react';
+import { FC, ReactNode } from "react";
 
 interface ButtonProps {
   children: ReactNode;
   className?: string;
-  onClick: () => void;
+  type?: "submit" | "reset" | "button" | undefined;
+  onClick?: () => void;
 }
 
-export const Button: FC<ButtonProps> = ({ children, className, onClick }) => {
+export const Button: FC<ButtonProps> = ({
+  children,
+  className,
+  type = "submit",
+  onClick,
+}) => {
   return (
     <button
       onClick={onClick}
+      type={type}
       className={`
-        absolute top-6 left-6 flex items-center px-4 py-2
-        bg-white/10 hover:bg-white/30 active:bg-white/40
-        text-white text-sm font-medium
-        border border-white/20 rounded-xl
-        backdrop-blur
-        shadow-inner hover:shadow-xl active:shadow-md
+        flex gap-1 items-center justify-center
+        px-5 py-4 rounded-xl
         transition-all duration-200 ease-in-out
-        active:scale-[0.98] ${className}
+        active:scale-[0.98]
+        backdrop-blur
+
+        /* Light mode */
+        bg-white/70 hover:bg-white/80 active:bg-white/90
+        text-gray-900
+        border border-gray-300
+        shadow-inner hover:shadow-lg active:shadow-md
+
+        /* Dark mode */
+        dark:bg-white/10 dark:hover:bg-white/20 dark:active:bg-white/30
+        dark:text-white
+        dark:border-white/20
+        dark:shadow-inner dark:hover:shadow-xl dark:active:shadow-md
+
+        ${className}
       `}
     >
       {children}

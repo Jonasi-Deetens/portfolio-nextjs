@@ -1,12 +1,10 @@
-'use client';
+"use client";
 
-import { withAuth } from '../components/Auth/withAuth';
-import { BackButton } from '../components/Elements/Buttons/BackButton';
-import { PlayerCharacterSelector } from '../components/Forms/Character/CharacterSelect';
+import { withAuth } from "../components/Auth/withAuth";
+import { BackButton } from "../components/Elements/Buttons/BackButton";
+import { PlayerCharacterSelector } from "../components/Forms/Character/CharacterSelect";
 
 const CharacterCreationPage = () => {
-  const handleStartGame = () => {};
-
   return (
     <main
       className="relative flex flex-col items-center justify-center w-full min-h-screen
@@ -21,7 +19,7 @@ rounded-full bg-white/10 blur-3xl mix-blend-screen
 pointer-events-none z-0 floating-mist"
       />
       <h1 className="text-3xl font-bold mb-4 text-center">Choose your hero!</h1>
-      <PlayerCharacterSelector onSelect={handleStartGame} />
+      <PlayerCharacterSelector />
       <BackButton />
     </main>
   );

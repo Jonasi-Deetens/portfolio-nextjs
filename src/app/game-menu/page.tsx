@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import NavigationHeader from '../components/Navbar/NavigationHeader';
-import { withAuth } from '../components/Auth/withAuth';
-import { MenuButton } from '../components/Elements/Buttons/MenuButton';
+import { useRouter } from "next/navigation";
+import NavigationHeader from "../components/Navbar/NavigationHeader";
+import { withAuth } from "../components/Auth/withAuth";
+import { Button } from "../components/Elements/Buttons/Button";
 
 const GameMenuPage = () => {
   const router = useRouter();
 
   const handleNewGame = () => {
-    router.push('/new-game');
+    router.push("/new-game");
   };
 
   const handleContinueGame = () => {
-    router.push('/character-select');
+    router.push("/character-select");
   };
 
   return (
@@ -38,10 +38,18 @@ const GameMenuPage = () => {
             ⚔️ Shadowpath
           </h1>
           <div className="space-y-4">
-            <MenuButton label="Start New Game" onClick={handleNewGame} />
-            <MenuButton label="Continue" onClick={handleContinueGame} />
-            <MenuButton label="Settings" onClick={() => alert('Settings')} />
-            <MenuButton label="Credits" onClick={() => alert('Credits')} />
+            <Button className="w-full" onClick={handleNewGame}>
+              Start New Game
+            </Button>
+            <Button className="w-full" onClick={handleContinueGame}>
+              Continue
+            </Button>
+            <Button className="w-full" onClick={() => alert("Settings")}>
+              Settings
+            </Button>
+            <Button className="w-full" onClick={() => alert("Credits")}>
+              Credits
+            </Button>
           </div>
         </div>
       </main>

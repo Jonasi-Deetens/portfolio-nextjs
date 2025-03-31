@@ -15,7 +15,7 @@ export const characterRouter = t.router({
         name: z.string().min(2).max(50),
         strength: z.number().min(1).max(20),
         agility: z.number().min(1).max(20),
-        intellect: z.number().min(1).max(20),
+        intelligence: z.number().min(1).max(20),
         charisma: z.number().min(1).max(20),
         luck: z.number().min(1).max(20),
       })
@@ -27,20 +27,20 @@ export const characterRouter = t.router({
         name,
         strength,
         agility,
-        intellect,
+        intelligence,
         charisma,
         luck,
       } = input;
 
       try {
-      // Step 1: Create Stat
+        // Step 1: Create Stat
         const stat = await prisma.stat.create({
           data: {
             hp: 10 + strength,
             maxHp: 10 + strength,
             strength,
             agility,
-            intelligence: intellect,
+            intelligence: intelligence,
             charisma,
             luck,
           },
@@ -127,7 +127,8 @@ export const characterRouter = t.router({
               },
             });
 
-            const tileId = tileMap.get(`${npc.x}:${npc.y}:${npc.layer}`) ?? null;
+            const tileId =
+              tileMap.get(`${npc.x}:${npc.y}:${npc.layer}`) ?? null;
             if (!tileId) continue;
 
             await prisma.character.create({
@@ -169,10 +170,10 @@ export const characterRouter = t.router({
           success: true,
           characterId: character.id,
           playthroughId: playthrough.id,
-        }; 
+        };
       } catch (error) {
-          console.error('❌ Error in createCharacter:', error);
-          throw error;
+        console.error("❌ Error in createCharacter:", error);
+        throw error;
       }
     }),
   getPlayerCharacters: t.procedure
