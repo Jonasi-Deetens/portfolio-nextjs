@@ -1,4 +1,4 @@
-import { Character, Stat } from "@prisma/client";
+import { Character, Class, Stat } from "@prisma/client";
 
 export type TrpcError = {
   message: string;
@@ -16,11 +16,12 @@ export type SCharacterWithStat = SerializeDates<
   Omit<Character, "statId" | "createdAt">
 > & {
   stat: Stat | null;
+  class: Class;
 };
 
 export type CharacterCreateValues = {
   name: string;
-  class: "Warrior" | "Rogue" | "Mage";
+  class: Class;
   storyTemplateId: number;
   strength: number;
   agility: number;
@@ -28,3 +29,21 @@ export type CharacterCreateValues = {
   charisma: number;
   luck: number;
 };
+
+//RESOURCE
+export type ResourceType =
+  | "hp"
+  | "maxHp"
+  | "mana"
+  | "maxMana"
+  | "rage"
+  | "maxRage"
+  | "energy"
+  | "maxEnergy"
+  | "stamina"
+  | "maxStamina"
+  | "focus"
+  | "maxFocus"
+  | "xp"
+  | "spirit"
+  | "maxSpirit";

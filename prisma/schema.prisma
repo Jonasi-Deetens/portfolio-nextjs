@@ -13,7 +13,7 @@ model User {
   name         String?
   passwordHash String?
 
-  playthroughs  StoryPlaythrough[]
+  playthroughs  StoryPlaythrough[] @relation("UserPlaythroughs")
   Player        Player[]
   emailVerified DateTime?
   accounts      Account[]
@@ -55,6 +55,9 @@ enum TileType {
   MOUNTAIN
   FOREST
   ROAD
+  WALL
+  CAVE_FLOOR
+  CAVE_WALL
 }
 
 enum ObjectType {
@@ -65,6 +68,44 @@ enum ObjectType {
   PORTAL
   SIGN
   DOOR
+  SHRINE
+}
+
+enum StatusEffect {
+  POISONED
+  BURNING
+  FROZEN
+  BLESSED
+  CURSED
+  STRENGTHENED
+  WEAKENED
+}
+
+model Class {
+  id          Int    @id @default(autoincrement())
+  name        String
+  description String
+
+  // Base stats multipliers
+  hpMultiplier           Float @default(1.0)
+  manaMultiplier         Float @default(1.0)
+  strengthMultiplier     Float @default(1.0)
+  agilityMultiplier      Float @default(1.0)
+  intelligenceMultiplier Float @default(1.0)
+
+  // Class specific abilities
+  abilities Json // Array of ability IDs or objects
+
+  // Class specific bonuses
+  passiveBonuses Json // {criticalChance, dodgeChance, etc}
+
+  // Starting equipment
+  startingEquipment Json // Array of item IDs
+
+  // Class progression
+  levelUpBonuses Json // {hp, mana, strength, etc per level}
+
+  characters Character[]
 }
 
 model StoryTemplate {
@@ -135,7 +176,7 @@ model StoryPlaythrough {
   storyTemplate   StoryTemplate @relation(fields: [storyTemplateId], references: [id])
   storyTemplateId Int
 
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation("UserPlaythroughs", fields: [userId], references: [id])
   userId String
 
   character   Character? @relation("PlaythroughPlayer", fields: [characterId], references: [id])
@@ -195,35 +236,86 @@ model Character {
   name     String
   isPlayer Boolean @default(false)
 
+  // Class related
+  class       Class @relation(fields: [classId], references: [id])
+  classId     Int
+  level       Int   @default(1)
+  skillPoints Int   @default(0)
+
+  // Core stats
   stat   Stat? @relation("CharacterStat", fields: [statId], references: [id])
   statId Int?  @unique
 
+  // Equipment and inventory
+  equipment Json? // Equipped items
+  inventory Json? // Inventory items
+  gold      Int   @default(0)
+
+  // Status effects
+  statusEffects StatusEffect[]
+
+  // Combat stats
+  criticalChance Float @default(0.05) // 5% base
+  dodgeChance    Float @default(0.05)
+  armor          Int   @default(0)
+  magicResist    Int   @default(0)
+
+  // Position
   tile   Tile? @relation("CharacterTile", fields: [tileId], references: [id])
   tileId Int?
 
   map   Map? @relation(fields: [mapId], references: [id])
   mapId Int?
 
+  // Relations
   playthrough   StoryPlaythrough @relation("PlaythroughCharacters", fields: [playthroughId], references: [id])
   playthroughId Int
 
   playerData Player? @relation("PlayerData")
   npcData    NPC?    @relation("NPCData")
 
-  createdAt        DateTime          @default(now())
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  lastCombatTime  DateTime?
+  lastLevelUpTime DateTime?
+
   StoryPlaythrough StoryPlaythrough? @relation("PlaythroughPlayer")
 }
 
 model Stat {
-  id           Int @id @default(autoincrement())
-  level        Int @default(1)
+  id    Int @id @default(autoincrement())
+  level Int @default(1)
+
+  // Core stats
   hp           Int
   maxHp        Int
+  mana         Int @default(0)
+  maxMana      Int @default(0)
   strength     Int
   agility      Int
-  charisma     Int
   intelligence Int
+  charisma     Int
   luck         Int
+  rage         Int @default(0)
+  maxRage      Int @default(0)
+  energy       Int @default(0)
+  maxEnergy    Int @default(0)
+  stamina      Int @default(0)
+  maxStamina   Int @default(0)
+  focus        Int @default(0)
+  maxFocus     Int @default(0)
+  xp           Int @default(0)
+  spirit       Int @default(0)
+  maxSpirit    Int @default(0)
+
+  // Combat derived stats
+  attackPower  Int @default(0)
+  spellPower   Int @default(0)
+  healingPower Int @default(0)
+
+  // Resource regeneration
+  hpRegen   Float @default(1.0)
+  manaRegen Float @default(1.0)
 
   character Character? @relation("CharacterStat")
 }
@@ -233,6 +325,26 @@ model Player {
   character   Character @relation("PlayerData", fields: [characterId], references: [id])
   characterId Int       @unique
 
+  // Player specific data
+  achievements    Json? // Unlocked achievements
+  questLog        Json? // Active and completed quests
+  reputation      Json? // Reputation with different factions
+  discoveredAreas Json? // Areas/maps discovered
+
+  // Social
+  friends Json? // Array of friend IDs
+  guild   Json? // Guild information if any
+
+  // Gameplay stats
+  playTime        Int @default(0) // In minutes
+  monstersKilled  Int @default(0)
+  questsCompleted Int @default(0)
+  deaths          Int @default(0)
+
+  // Settings and preferences
+  settings Json? // User preferences
+
+  // Authentication
   userId String
   user   User   @relation(fields: [userId], references: [id])
 }
@@ -242,5 +354,20 @@ model NPC {
   character   Character @relation("NPCData", fields: [characterId], references: [id])
   characterId Int       @unique
 
-  behavior Json
+  // AI behavior
+  behavior   Json // Combat and movement patterns
+  dialogue   Json? // Dialogue options
+  questGiver Boolean @default(false)
+  merchant   Boolean @default(false)
+
+  // If merchant
+  shopInventory Json? // Available items to sell
+
+  // If quest giver
+  availableQuests Json? // Quests this NPC can give
+
+  // Faction and relations
+  faction    String? // Which faction this NPC belongs to
+  hostileTo  Json? // Array of hostile faction names
+  friendlyTo Json? // Array of friendly faction names
 }

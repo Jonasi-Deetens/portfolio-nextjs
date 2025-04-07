@@ -18,6 +18,7 @@ export const characterRouter = t.router({
         intelligence: z.number().min(1).max(20),
         charisma: z.number().min(1).max(20),
         luck: z.number().min(1).max(20),
+        classId: z.number(),
       })
     )
     .mutation(async ({ input }) => {
@@ -30,7 +31,9 @@ export const characterRouter = t.router({
         intelligence,
         charisma,
         luck,
+        classId,
       } = input;
+      console.log("input", input);
 
       try {
         // Step 1: Create Stat
@@ -45,13 +48,14 @@ export const characterRouter = t.router({
             luck,
           },
         });
+        console.log("userId", userId);
 
         // Step 2: Create StoryPlaythrough
         const playthrough = await prisma.storyPlaythrough.create({
           data: {
             name: `${name}'s Adventure`,
-            storyTemplateId: storyTemplateId,
-            userId,
+            storyTemplate: { connect: { id: storyTemplateId } },
+            user: { connect: { id: userId } },
           },
         });
 
@@ -62,6 +66,7 @@ export const characterRouter = t.router({
             isPlayer: true,
             stat: { connect: { id: stat.id } },
             playthrough: { connect: { id: playthrough.id } },
+            class: { connect: { id: classId } },
           },
         });
 
@@ -144,6 +149,7 @@ export const characterRouter = t.router({
                     behavior: npc.behavior ?? {},
                   },
                 },
+                class: { connect: { id: classId } },
               },
             });
           }

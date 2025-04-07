@@ -18,9 +18,7 @@ export const CLASS_OPTIONS = [
 
 const validationSchema = Yup.object({
   name: Yup.string().min(2).max(32).required("Name is required"),
-  class: Yup.string()
-    .oneOf(CLASS_OPTIONS.map((opt) => opt.value))
-    .required("Class is required"),
+  classId: Yup.number().min(1).required("Class is required"),
   storyTemplateId: Yup.number().min(1).required("Story is required"),
   strength: Yup.number().min(1).max(20).required(),
   agility: Yup.number().min(1).max(20).required(),
@@ -33,11 +31,12 @@ export const CharacterCreationForm: FC = () => {
   const { data: session } = useSession();
   const router = useRouter();
   const createCharacter = trpc.character.createCharacter.useMutation();
+  const { data: classes } = trpc.class.getAll.useQuery();
   const { data: storyTemplates } = trpc.story.getStoryTemplates.useQuery();
 
   const initialValues = {
     name: "",
-    class: CLASS_OPTIONS[0].value,
+    classId: 1,
     storyTemplateId: storyTemplates?.[0]?.id || 0,
     strength: 8,
     agility: 4,
@@ -96,7 +95,18 @@ export const CharacterCreationForm: FC = () => {
           </div>
 
           <div>
-            <FormikSelect name="class" label="Class" options={CLASS_OPTIONS} />
+            <FormikSelect
+              name="classId"
+              label="Class"
+              options={
+                classes
+                  ? classes.map((cls) => ({
+                      label: cls.name,
+                      value: cls.id,
+                    }))
+                  : []
+              }
+            />
           </div>
 
           <div>

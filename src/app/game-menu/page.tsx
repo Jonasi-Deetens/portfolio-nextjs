@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import NavigationHeader from "../components/Navbar/NavigationHeader";
 import { withAuth } from "../components/Auth/withAuth";
 import { Button } from "../components/Elements/Buttons/Button";
+import CharacterHUD from "../components/Hud/CharacterHud";
+import { signOut } from "next-auth/react";
 
 const GameMenuPage = () => {
   const router = useRouter();
@@ -14,6 +16,10 @@ const GameMenuPage = () => {
 
   const handleContinueGame = () => {
     router.push("/character-select");
+  };
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/login" });
   };
 
   return (
@@ -31,6 +37,7 @@ const GameMenuPage = () => {
       />
 
       <NavigationHeader />
+      <CharacterHUD />
 
       <main className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
         <div className="max-w-md w-full bg-black/60 dark:bg-black/80 backdrop-blur-lg rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.5)] p-8 border border-white/10 mt-32">
@@ -49,6 +56,9 @@ const GameMenuPage = () => {
             </Button>
             <Button className="w-full" onClick={() => alert("Credits")}>
               Credits
+            </Button>
+            <Button className="w-full" onClick={handleLogout}>
+              Logout
             </Button>
           </div>
         </div>
