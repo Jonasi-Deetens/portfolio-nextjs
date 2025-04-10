@@ -7,7 +7,7 @@ import {
   StoryPlaythrough,
   NPC,
   Player,
-} from '@prisma/client';
+} from "@prisma/client";
 
 export type TrpcError = {
   message: string;
@@ -21,10 +21,14 @@ type SerializeDates<T> = {
 
 export type SCharacter = SerializeDates<Character>;
 
-export type SCharacterWithStat = SerializeDates<Omit<Character, 'statId' | 'createdAt'>> & {
+export type SCharacterWithStat = SerializeDates<
+  Omit<Character, "statId" | "createdAt">
+> & {
   stat: Stat | null;
   class: CharacterClass;
-  playthrough: StoryPlaythrough | null;
+  playthrough:
+    | (StoryPlaythrough & { maps: (Map & { tiles: Tile[] })[] })
+    | null;
   map: Map | null;
   tile: Tile | null;
   npcData: NPC | null;
@@ -44,18 +48,18 @@ export type CharacterCreateValues = {
 
 //RESOURCE
 export type ResourceType =
-  | 'hp'
-  | 'maxHp'
-  | 'mana'
-  | 'maxMana'
-  | 'rage'
-  | 'maxRage'
-  | 'energy'
-  | 'maxEnergy'
-  | 'stamina'
-  | 'maxStamina'
-  | 'focus'
-  | 'maxFocus'
-  | 'xp'
-  | 'spirit'
-  | 'maxSpirit';
+  | "hp"
+  | "maxHp"
+  | "mana"
+  | "maxMana"
+  | "rage"
+  | "maxRage"
+  | "energy"
+  | "maxEnergy"
+  | "stamina"
+  | "maxStamina"
+  | "focus"
+  | "maxFocus"
+  | "xp"
+  | "spirit"
+  | "maxSpirit";

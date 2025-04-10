@@ -6,6 +6,7 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import { CharacterProvider } from "./providers/CharacterProvider";
 import ClientThemeProvider from "./providers/ClientThemeProvider";
+import { MapProvider } from "./providers/MapProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,7 +21,9 @@ export default function RootLayout({
         <SessionProvider>
           <TRPCProvider>
             <CharacterProvider>
-              <ClientThemeProvider>{children}</ClientThemeProvider>
+              <MapProvider>
+                <ClientThemeProvider>{children}</ClientThemeProvider>
+              </MapProvider>
             </CharacterProvider>
           </TRPCProvider>
         </SessionProvider>

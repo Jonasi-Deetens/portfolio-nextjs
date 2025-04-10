@@ -10,6 +10,8 @@ import { SCharacterWithStat } from "../types/types";
 import { useSession } from "next-auth/react";
 import { trpc } from "../../utils/trpc";
 
+type Direction = "up" | "down" | "left" | "right";
+
 type CharacterContextType = {
   characters: SCharacterWithStat[];
   selectedCharacter: SCharacterWithStat | null;
@@ -17,6 +19,8 @@ type CharacterContextType = {
   isError: boolean;
   setSelectedCharacter: (character: SCharacterWithStat) => void;
   refreshCharacters: () => Promise<void>;
+  moveCharacter: (direction: Direction) => Promise<void>;
+  isValidMove: (x: number, y: number) => boolean;
 };
 
 const CharacterContext = createContext<CharacterContextType | undefined>(
@@ -63,6 +67,68 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [fetchCharacters, status]);
 
+  const updatePosition = trpc.character.updatePosition.useMutation({
+    onSuccess: () => {
+      refreshCharacters();
+    },
+  });
+
+  const isValidMove = (x: number, y: number): boolean => {
+    if (!selectedCharacter?.playthrough?.maps?.[0]) return false;
+    const currentMap = selectedCharacter.playthrough.maps[0];
+
+    if (x < 0 || x >= currentMap.width || y < 0 || y >= currentMap.height) {
+      return false;
+    }
+
+    const targetTile = currentMap.tiles.find(
+      (t) => t.x === x && t.y === y && t.layer === 0
+    );
+
+    const unwalkableTiles = ["WALL", "WATER", "MOUNTAIN"];
+    return targetTile ? !unwalkableTiles.includes(targetTile.type) : false;
+  };
+
+  const moveCharacter = async (direction: Direction) => {
+    if (!selectedCharacter?.tile || !selectedCharacter.playthrough?.maps?.[0])
+      return;
+
+    const currentX = selectedCharacter.tile.x;
+    const currentY = selectedCharacter.tile.y;
+    const currentMap = selectedCharacter.playthrough.maps[0];
+
+    let newX = currentX;
+    let newY = currentY;
+
+    switch (direction) {
+      case "up":
+        newY -= 1;
+        break;
+      case "down":
+        newY += 1;
+        break;
+      case "left":
+        newX -= 1;
+        break;
+      case "right":
+        newX += 1;
+        break;
+    }
+
+    if (isValidMove(newX, newY)) {
+      const targetTile = currentMap.tiles.find(
+        (t) => t.x === newX && t.y === newY && t.layer === 0
+      );
+
+      if (targetTile) {
+        await updatePosition.mutateAsync({
+          characterId: selectedCharacter.id,
+          tileId: targetTile.id,
+        });
+      }
+    }
+  };
+
   return (
     <CharacterContext.Provider
       value={{
@@ -72,6 +138,8 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({
         refreshCharacters,
         isLoading,
         isError,
+        moveCharacter,
+        isValidMove,
       }}
     >
       {children}
