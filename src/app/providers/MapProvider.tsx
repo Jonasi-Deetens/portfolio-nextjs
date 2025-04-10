@@ -1,6 +1,5 @@
 "use client";
 
-import { Map, Tile } from "@prisma/client";
 import {
   createContext,
   useContext,
@@ -9,33 +8,30 @@ import {
   ReactNode,
 } from "react";
 import { useCharacter } from "./CharacterProvider";
+import { SMap, STile } from "../types/types";
 
 interface MapContextType {
-  currentMap: Map | null;
-  visibleTiles: Tile[][];
+  currentMap: SMap | null;
+  visibleTiles: (STile | null)[][];
   switchMap: (mapId: number) => void;
   VIEWPORT_SIZE: number;
 }
 
 const MapContext = createContext<MapContextType | undefined>(undefined);
 
-const VIEWPORT_SIZE = 5; // View radius around player
+const VIEWPORT_SIZE = 9;
 
 export function MapProvider({ children }: { children: ReactNode }) {
   const { selectedCharacter } = useCharacter();
-  const [currentMap, setCurrentMap] = useState<
-    (Map & { tiles: Tile[] }) | null
-  >(null);
-  const [visibleTiles, setVisibleTiles] = useState<Tile[][]>([]);
+  const [currentMap, setCurrentMap] = useState<SMap | null>(null);
+  const [visibleTiles, setVisibleTiles] = useState<(STile | null)[][]>([]);
 
-  // Initialize with the first map when character is loaded
   useEffect(() => {
     if (selectedCharacter?.playthrough?.maps?.[0]) {
       setCurrentMap(selectedCharacter.playthrough.maps[0]);
     }
   }, [selectedCharacter]);
 
-  // Update visible tiles when map or player position changes
   useEffect(() => {
     if (currentMap?.tiles && selectedCharacter?.tile) {
       const playerX = selectedCharacter.tile.x;
@@ -43,16 +39,14 @@ export function MapProvider({ children }: { children: ReactNode }) {
       const radius = Math.floor(VIEWPORT_SIZE / 2);
 
       const generateVisibleTiles = () => {
-        const tiles: Tile[][] = [];
+        const tiles: (STile | null)[][] = [];
 
-        // Calculate view bounds centered on player
         for (let dy = -radius; dy <= radius; dy++) {
-          const row: (Tile | null)[] = [];
+          const row: (STile | null)[] = [];
           for (let dx = -radius; dx <= radius; dx++) {
             const x = playerX + dx;
             const y = playerY + dy;
 
-            // Check if coordinates are within map bounds
             if (
               x >= 0 &&
               x < currentMap.width &&
@@ -66,11 +60,10 @@ export function MapProvider({ children }: { children: ReactNode }) {
                 row.push(currentTile);
               }
             } else {
-              // Push an empty tile for out of bounds
               row.push(null);
             }
           }
-          tiles.push(row);
+          if (row) tiles.push(row);
         }
 
         setVisibleTiles(tiles);

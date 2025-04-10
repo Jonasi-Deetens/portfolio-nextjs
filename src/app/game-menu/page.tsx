@@ -1,25 +1,24 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import NavigationHeader from '../components/Navbar/NavigationHeader';
-import { withAuth } from '../components/Auth/withAuth';
-import { Button } from '../components/Elements/Buttons/Button';
-import CharacterHUD from '../components/Hud/CharacterHud';
-import { signOut } from 'next-auth/react';
+import { useRouter } from "next/navigation";
+import NavigationHeader from "../components/Navbar/NavigationHeader";
+import { withAuth } from "../components/Auth/withAuth";
+import { Button } from "../components/Elements/Buttons/Button";
+import { signOut } from "next-auth/react";
 
 const GameMenuPage = () => {
   const router = useRouter();
 
   const handleNewGame = () => {
-    router.push('/new-game');
+    router.push("/new-game");
   };
 
   const handleContinueGame = () => {
-    router.push('/character-select');
+    router.push("/character-select");
   };
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/login' });
+    await signOut({ callbackUrl: "/login" });
   };
 
   return (
@@ -50,10 +49,10 @@ const GameMenuPage = () => {
             <Button className="w-full" onClick={handleContinueGame}>
               Continue
             </Button>
-            <Button className="w-full" onClick={() => alert('Settings')}>
+            <Button className="w-full" onClick={() => alert("Settings")}>
               Settings
             </Button>
-            <Button className="w-full" onClick={() => alert('Credits')}>
+            <Button className="w-full" onClick={() => alert("Credits")}>
               Credits
             </Button>
             <Button className="w-full" onClick={handleLogout}>

@@ -5,46 +5,92 @@ import { Button } from "../components/Elements/Buttons/Button";
 import CharacterHUD from "../components/Hud/CharacterHud";
 import { useCharacter } from "../providers/CharacterProvider";
 import { useMap } from "../providers/MapProvider";
-import { useEffect } from "react";
+import { useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-type GameState = "loading" | "playing" | "paused" | "gameover";
+
+import Tile from "../components/Game/Tile";
 
 const GamePage = () => {
   const router = useRouter();
   const { visibleTiles, VIEWPORT_SIZE } = useMap();
   const { selectedCharacter, moveCharacter } = useCharacter();
+  const moveInProgress = useRef(false);
 
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
+  const handleMove = useCallback(
+    async (direction: "up" | "down" | "left" | "right") => {
+      if (moveInProgress.current) return;
+      moveInProgress.current = true;
+
+      try {
+        moveInProgress.current = false;
+        await moveCharacter(direction);
+        moveInProgress.current = false;
+      } finally {
+        // setTimeout(() => {
+        moveInProgress.current = false;
+        // }, 50);
+      }
+    },
+    [moveCharacter]
+  );
+
+  // Memoize keyboard event handler
+  const handleKeyPress = useCallback(
+    (event: KeyboardEvent) => {
       switch (event.key) {
         case "ArrowUp":
         case "w":
           event.preventDefault();
-          moveCharacter("up");
+          handleMove("up");
           break;
         case "ArrowDown":
         case "s":
           event.preventDefault();
-          moveCharacter("down");
+          handleMove("down");
           break;
         case "ArrowLeft":
         case "a":
           event.preventDefault();
-          moveCharacter("left");
+          handleMove("left");
           break;
         case "ArrowRight":
         case "d":
           event.preventDefault();
-          moveCharacter("right");
+          handleMove("right");
           break;
       }
-    };
+    },
+    [handleMove]
+  );
 
+  useEffect(() => {
     window.addEventListener("keydown", handleKeyPress);
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
     };
-  }, [moveCharacter]);
+  }, [handleKeyPress]);
+
+  // Memoize the grid rendering
+  const renderGrid = useMemo(() => {
+    return visibleTiles.flat().map((tile, index) => {
+      const isPlayer =
+        tile?.x === selectedCharacter?.tile?.x &&
+        tile?.y === selectedCharacter?.tile?.y;
+
+      const tileClassName = `w-16 h-16 ${
+        isPlayer ? "bg-blue-500" : "bg-gray-700"
+      } flex items-center justify-center`;
+
+      return (
+        <Tile
+          key={`${tile?.x}-${tile?.y}-${index}`}
+          tile={tile}
+          isPlayer={isPlayer}
+          className={tileClassName}
+        />
+      );
+    });
+  }, [visibleTiles, selectedCharacter?.tile?.x, selectedCharacter?.tile?.y]);
 
   if (!selectedCharacter) {
     return (
@@ -56,6 +102,7 @@ const GamePage = () => {
       </div>
     );
   }
+
   return (
     <main
       className="relative w-full min-h-screen
@@ -72,34 +119,12 @@ pointer-events-none z-0 floating-mist"
       <CharacterHUD />
 
       <div className="flex justify-center items-center min-h-screen">
-        <div className="w-[600px] h-[600px] m-auto bg-black/30 backdrop-blur-sm rounded-lg border border-white/10">
+        <div className="bg-black/30 backdrop-blur-sm rounded-lg border border-white/10">
           <div
-            className="grid gap-1 p-4"
-            style={{ gridTemplateColumns: `repeat(${VIEWPORT_SIZE}, 1fr)` }}
+            className="grid gap-0"
+            style={{ gridTemplateColumns: `repeat(${VIEWPORT_SIZE}, 64px)` }}
           >
-            {visibleTiles.flat().map((tile, index) =>
-              tile ? (
-                <div
-                  key={index}
-                  className={`w-full aspect-square rounded ${
-                    tile.x === selectedCharacter.tile?.x &&
-                    tile.y === selectedCharacter.tile?.y
-                      ? "bg-blue-500"
-                      : "bg-gray-700"
-                  } flex items-center justify-center`}
-                >
-                  {tile.x === selectedCharacter.tile?.x &&
-                  tile.y === selectedCharacter.tile?.y
-                    ? "P"
-                    : "·"}
-                </div>
-              ) : (
-                <div
-                  key={index}
-                  className="w-full aspect-square rounded bg-gray-900 flex items-center justify-center"
-                />
-              )
-            )}
+            {renderGrid}
           </div>
         </div>
       </div>

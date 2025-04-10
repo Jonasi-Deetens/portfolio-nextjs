@@ -91,6 +91,17 @@ export const characterRouter = t.router({
 
         // Step 3: Create Character
         console.log(playthrough.maps);
+        // Find a valid starting tile (not a wall/water/mountain)
+        const startTile = playthrough.maps[0].tiles.find(
+          (tile) =>
+            tile.layer === 0 &&
+            !["WALL", "WATER", "MOUNTAIN"].includes(tile.type)
+        );
+
+        if (!startTile) {
+          throw new Error("No valid starting position found");
+        }
+
         const character = await prisma.character.create({
           data: {
             name,
@@ -98,7 +109,7 @@ export const characterRouter = t.router({
             stat: { connect: { id: stat.id } },
             playthrough: { connect: { id: playthrough.id } },
             class: { connect: { id: classId } },
-            tile: { connect: { id: playthrough.maps?.[0]?.tiles?.[0]?.id } },
+            tile: { connect: { id: startTile.id } },
           },
         });
 
@@ -221,6 +232,7 @@ export const characterRouter = t.router({
         throw error;
       }
     }),
+
   getPlayerCharacters: t.procedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
@@ -238,17 +250,34 @@ export const characterRouter = t.router({
             include: {
               maps: {
                 include: {
-                  tiles: true,
+                  tiles: {
+                    include: {
+                      objects: {
+                        include: {
+                          object: true,
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },
           },
           npcData: true,
           playerData: true,
-          tile: true,
+          tile: {
+            include: {
+              objects: {
+                include: {
+                  object: true,
+                },
+              },
+            },
+          },
         },
       });
     }),
+
   updatePosition: t.procedure
     .input(
       z.object({
@@ -263,6 +292,38 @@ export const characterRouter = t.router({
         where: { id: characterId },
         data: {
           tileId: tileId,
+        },
+        include: {
+          stat: true,
+          class: true,
+          playthrough: {
+            include: {
+              maps: {
+                include: {
+                  tiles: {
+                    include: {
+                      objects: {
+                        include: {
+                          object: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          npcData: true,
+          playerData: true,
+          tile: {
+            include: {
+              objects: {
+                include: {
+                  object: true,
+                },
+              },
+            },
+          },
         },
       });
     }),

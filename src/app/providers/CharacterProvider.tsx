@@ -6,7 +6,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { SCharacterWithStat } from "../types/types";
+import { SCharacterWithStat, STile } from "../types/types";
 import { useSession } from "next-auth/react";
 import { trpc } from "../../utils/trpc";
 
@@ -48,7 +48,23 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({
       const data = await utils.character.getPlayerCharacters.fetch({
         id: session.user.id,
       });
-      setCharacters(data);
+      setCharacters(data as SCharacterWithStat[]);
+
+      if (selectedCharacter) {
+        const updatedSelectedChar = (data as SCharacterWithStat[]).find(
+          (char) => char.id === selectedCharacter.id
+        );
+        if (updatedSelectedChar) {
+          setSelectedCharacter(updatedSelectedChar);
+        }
+      } else if (data.length > 0) {
+        const firstPlayerChar = (data as SCharacterWithStat[]).find(
+          (char) => char.isPlayer
+        );
+        if (firstPlayerChar) {
+          setSelectedCharacter(firstPlayerChar);
+        }
+      }
     } catch (err) {
       console.error("Failed to fetch characters:", err);
       setIsError(true);
@@ -62,16 +78,15 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [fetchCharacters]);
 
   useEffect(() => {
-    if (status === "authenticated") {
-      fetchCharacters();
-    }
+    const fetchData = async () => {
+      if (status === "authenticated") {
+        await fetchCharacters();
+      }
+    };
+    fetchData();
   }, [fetchCharacters, status]);
 
-  const updatePosition = trpc.character.updatePosition.useMutation({
-    onSuccess: () => {
-      refreshCharacters();
-    },
-  });
+  const updatePosition = trpc.character.updatePosition.useMutation();
 
   const isValidMove = (x: number, y: number): boolean => {
     if (!selectedCharacter?.playthrough?.maps?.[0]) return false;
@@ -80,11 +95,9 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({
     if (x < 0 || x >= currentMap.width || y < 0 || y >= currentMap.height) {
       return false;
     }
-
     const targetTile = currentMap.tiles.find(
       (t) => t.x === x && t.y === y && t.layer === 0
     );
-
     const unwalkableTiles = ["WALL", "WATER", "MOUNTAIN"];
     return targetTile ? !unwalkableTiles.includes(targetTile.type) : false;
   };
@@ -119,9 +132,18 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({
       const targetTile = currentMap.tiles.find(
         (t) => t.x === newX && t.y === newY && t.layer === 0
       );
-
       if (targetTile) {
-        await updatePosition.mutateAsync({
+        // Instantly update the character's position in local state
+        setSelectedCharacter((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            tile: targetTile as STile,
+          };
+        });
+
+        // Update the position in the database in the background
+        updatePosition.mutate({
           characterId: selectedCharacter.id,
           tileId: targetTile.id,
         });

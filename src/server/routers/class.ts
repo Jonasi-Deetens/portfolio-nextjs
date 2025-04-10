@@ -1,6 +1,6 @@
-import { initTRPC } from '@trpc/server';
-import { z } from 'zod';
-import { prisma } from '../../lib/prisma';
+import { initTRPC } from "@trpc/server";
+import { z } from "zod";
+import { prisma } from "../../lib/prisma";
 
 const t = initTRPC.create();
 
@@ -9,11 +9,13 @@ export const classRouter = t.router({
     return await prisma.characterClass.findMany();
   }),
 
-  getById: t.procedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
-    return await prisma.characterClass.findUnique({
-      where: { id: input.id },
-    });
-  }),
+  getClassById: t.procedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      return await prisma.characterClass.findUnique({
+        where: { id: input.id },
+      });
+    }),
 
   create: t.procedure
     .input(
@@ -68,9 +70,11 @@ export const classRouter = t.router({
       });
     }),
 
-  delete: t.procedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
-    return await prisma.characterClass.delete({
-      where: { id: input.id },
-    });
-  }),
+  delete: t.procedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      return await prisma.characterClass.delete({
+        where: { id: input.id },
+      });
+    }),
 });
