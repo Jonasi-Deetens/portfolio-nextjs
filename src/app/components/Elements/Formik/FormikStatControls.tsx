@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useFormikContext } from "formik";
-import { CharacterCreateValues } from "../../../types/types";
-import { useEffect, useRef } from "react";
+import { useFormikContext } from 'formik';
+import { CharacterCreateValues } from '../../../types/types';
+import { useEffect, useRef } from 'react';
 
 export const CLASS_BASE_STATS: Record<string, Record<string, number>> = {
   Warrior: {
@@ -28,15 +28,9 @@ export const CLASS_BASE_STATS: Record<string, Record<string, number>> = {
   },
 };
 
-export const STAT_FIELDS = [
-  "strength",
-  "agility",
-  "intelligence",
-  "charisma",
-  "luck",
-] as const;
+export const STAT_FIELDS = ['strength', 'agility', 'intelligence', 'charisma', 'luck'] as const;
 
-export const STAT_POINT_POOL = 5;
+export const STAT_POINT_POOL = 20;
 
 export const FormikStatControls = () => {
   const formik = useFormikContext<CharacterCreateValues>();
@@ -68,19 +62,16 @@ export const FormikStatControls = () => {
     }
   }, [formik.values.class, formik]);
 
-  const handleChange = (
-    stat: (typeof STAT_FIELDS)[number],
-    direction: "up" | "down"
-  ) => {
+  const handleChange = (stat: (typeof STAT_FIELDS)[number], direction: 'up' | 'down') => {
     const base = baseStats[stat];
     const current = formik.values[stat];
 
-    if (direction === "up") {
+    if (direction === 'up') {
       if (pointsRemaining <= 0 || current >= 20) return;
       formik.setFieldValue(stat, current + 1);
     }
 
-    if (direction === "down") {
+    if (direction === 'down') {
       if (current <= base) return;
       formik.setFieldValue(stat, current - 1);
     }
@@ -89,8 +80,7 @@ export const FormikStatControls = () => {
   return (
     <div className="flex flex-col justify-center w-full">
       <p className="text-white text-sm text-center mb-4">
-        Points remaining:{" "}
-        <span className="font-semibold">{pointsRemaining}</span>
+        Points remaining: <span className="font-semibold">{pointsRemaining}</span>
       </p>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -104,20 +94,18 @@ export const FormikStatControls = () => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => handleChange(stat, "down")}
+                  onClick={() => handleChange(stat, 'down')}
                   disabled={value <= base}
                   className="bg-white/10 text-white px-2 py-1 rounded-lg border border-white/20 disabled:opacity-30 w-8 h-8"
                 >
                   –
                 </button>
 
-                <span className="w-8 text-center text-white font-medium">
-                  {value}
-                </span>
+                <span className="w-8 text-center text-white font-medium">{value}</span>
 
                 <button
                   type="button"
-                  onClick={() => handleChange(stat, "up")}
+                  onClick={() => handleChange(stat, 'up')}
                   disabled={pointsRemaining <= 0 || value >= 20}
                   className="bg-white/10 text-white px-2 py-1 rounded-lg border border-white/20 disabled:opacity-30 w-8 h-8"
                 >

@@ -48,6 +48,43 @@ model Session {
   user User @relation(fields: [userId], references: [id])
 }
 
+// Core game objects
+model Object {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  type        ObjectType
+  properties  Json     // Base properties for all instances
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  templateObjects TemplateObject[]
+  gameObjects    GameObject[]
+}
+
+model TemplateObject {
+  id         Int      @id @default(autoincrement())
+  object     Object   @relation(fields: [objectId], references: [id])
+  objectId   Int
+  properties Json     // Override properties for this template instance
+  
+  tile   TemplateTile @relation(fields: [tileId], references: [id])
+  tileId Int
+}
+
+model GameObject {
+  id         Int      @id @default(autoincrement())
+  object     Object   @relation(fields: [objectId], references: [id])
+  objectId   Int
+  properties Json     // Runtime properties for this game instance
+  
+  tile   Tile @relation(fields: [tileId], references: [id])
+  tileId Int
+  createdAt DateTime @default(now())
+}
+
+
+// Game enums
 enum TileType {
   GRASS
   WATER
@@ -61,7 +98,12 @@ enum TileType {
 }
 
 enum ObjectType {
+  // Storage
   CHEST
+  CONTAINER
+  STORAGE
+  
+  // Environment
   TREE
   ROCK
   HOUSE
@@ -69,6 +111,28 @@ enum ObjectType {
   SIGN
   DOOR
   SHRINE
+  
+  // Equipment
+  WEAPON
+  ARMOR
+  ACCESSORY
+  
+  // Items
+  ITEM
+  CONSUMABLE
+  QUEST_ITEM
+  CURRENCY
+  
+  // Furniture
+  FURNITURE
+  CRAFTING_STATION
+  DECORATION
+  
+  // Interactive
+  LEVER
+  BUTTON
+  TRAP
+  LIGHT_SOURCE
 }
 
 enum StatusEffect {
@@ -81,7 +145,7 @@ enum StatusEffect {
   WEAKENED
 }
 
-model Class {
+model CharacterClass {
   id          Int    @id @default(autoincrement())
   name        String
   description String
@@ -106,8 +170,10 @@ model Class {
   levelUpBonuses Json // {hp, mana, strength, etc per level}
 
   characters Character[]
+  templateCharacters TemplateCharacter[]
 }
 
+// Story and world
 model StoryTemplate {
   id          Int      @id @default(autoincrement())
   name        String
@@ -121,6 +187,7 @@ model StoryTemplate {
 model TemplateMap {
   id     Int    @id @default(autoincrement())
   name   String
+  description String
   width  Int
   height Int
 
@@ -128,7 +195,6 @@ model TemplateMap {
   templateId    Int
 
   templateTiles      TemplateTile[]
-  templateCharacters TemplateCharacter[]
 }
 
 model TemplateTile {
@@ -140,32 +206,52 @@ model TemplateTile {
 
   map             TemplateMap      @relation(fields: [mapId], references: [id])
   mapId           Int
+
   templateObjects TemplateObject[]
+  characters      TemplateCharacter[]  @relation("TemplateCharacterTile")
+
+  createdAt DateTime @default(now())
+  @@unique([x, y, layer, mapId])
 }
 
 model TemplateCharacter {
   id       Int     @id @default(autoincrement())
   name     String
   isPlayer Boolean @default(false)
-  stats    Json // { hp, strength, etc. }
-  behavior Json?
 
-  x     Int
-  y     Int
-  layer Int
+  // Class related
+  class       CharacterClass @relation(fields: [classId], references: [id])
+  classId     Int
+  level       Int   @default(1)
+  skillPoints Int   @default(0)
 
-  map   TemplateMap @relation(fields: [mapId], references: [id])
-  mapId Int
-}
+  stat   Stat? @relation("TemplateCharacterStat", fields: [statId], references: [id])
+  statId Int?  @unique
 
-model TemplateObject {
-  id         Int        @id @default(autoincrement())
-  type       ObjectType
-  name       String
-  properties Json
+  // Equipment and inventory
+  equipment Json? // Equipped items
+  inventory Json? // Inventory items
+  gold      Int   @default(0)
 
-  tile   TemplateTile @relation(fields: [tileId], references: [id])
-  tileId Int
+  // Status effects
+  statusEffects StatusEffect[]
+
+  // Combat stats
+  criticalChance Float @default(0.05)
+  dodgeChance    Float @default(0.05)
+  armor          Int   @default(0)
+  magicResist    Int   @default(0)
+
+  // Position
+  tile   TemplateTile? @relation("TemplateCharacterTile", fields: [tileId], references: [id])
+  tileId Int?
+
+  npcData    NPC?    @relation("TemplateNPCData")
+
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  lastCombatTime  DateTime?
+  lastLevelUpTime DateTime?
 }
 
 model StoryPlaythrough {
@@ -198,7 +284,6 @@ model Map {
   playthroughId Int
 
   tiles      Tile[]
-  characters Character[]
 }
 
 model Tile {
@@ -219,25 +304,13 @@ model Tile {
   @@unique([x, y, layer, mapId])
 }
 
-model GameObject {
-  id         Int        @id @default(autoincrement())
-  type       ObjectType
-  name       String
-  properties Json
-
-  tile   Tile @relation(fields: [tileId], references: [id])
-  tileId Int
-
-  createdAt DateTime @default(now())
-}
-
 model Character {
   id       Int     @id @default(autoincrement())
   name     String
   isPlayer Boolean @default(false)
 
   // Class related
-  class       Class @relation(fields: [classId], references: [id])
+  class       CharacterClass @relation(fields: [classId], references: [id])
   classId     Int
   level       Int   @default(1)
   skillPoints Int   @default(0)
@@ -255,7 +328,7 @@ model Character {
   statusEffects StatusEffect[]
 
   // Combat stats
-  criticalChance Float @default(0.05) // 5% base
+  criticalChance Float @default(0.05)
   dodgeChance    Float @default(0.05)
   armor          Int   @default(0)
   magicResist    Int   @default(0)
@@ -263,9 +336,6 @@ model Character {
   // Position
   tile   Tile? @relation("CharacterTile", fields: [tileId], references: [id])
   tileId Int?
-
-  map   Map? @relation(fields: [mapId], references: [id])
-  mapId Int?
 
   // Relations
   playthrough   StoryPlaythrough @relation("PlaythroughCharacters", fields: [playthroughId], references: [id])
@@ -318,6 +388,7 @@ model Stat {
   manaRegen Float @default(1.0)
 
   character Character? @relation("CharacterStat")
+  templateCharacter TemplateCharacter? @relation("TemplateCharacterStat")
 }
 
 model Player {
@@ -353,6 +424,8 @@ model NPC {
   id          Int       @id @default(autoincrement())
   character   Character @relation("NPCData", fields: [characterId], references: [id])
   characterId Int       @unique
+  templateCharacter   TemplateCharacter @relation("TemplateNPCData", fields: [templateCharacterId], references: [id])
+  templateCharacterId Int       @unique
 
   // AI behavior
   behavior   Json // Combat and movement patterns

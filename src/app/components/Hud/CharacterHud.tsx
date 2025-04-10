@@ -1,17 +1,8 @@
-import { FC, JSX } from "react";
-import StatBar from "./StatBar";
-import {
-  Heart,
-  Flame,
-  Droplet,
-  Star,
-  Swords,
-  Shield,
-  Sparkles,
-  Skull,
-} from "lucide-react";
-import { useCharacter } from "../../providers/CharacterProvider";
-import { ResourceType } from "../../types/types";
+import { FC, JSX } from 'react';
+import StatBar from './StatBar';
+import { Heart, Flame, Droplet, Star, Swords, Shield, Sparkles, Skull } from 'lucide-react';
+import { useCharacter } from '../../providers/CharacterProvider';
+import { ResourceType } from '../../types/types';
 
 const CharacterHUD: FC = () => {
   const { selectedCharacter } = useCharacter();
@@ -20,28 +11,21 @@ const CharacterHUD: FC = () => {
 
   const { name, stat } = selectedCharacter;
   const { level, hp, maxHp, intelligence, strength, agility } = stat;
-  const characterClass = selectedCharacter.class ?? "Adventurer";
+  console.log('selectedCharacter', selectedCharacter);
+  const characterClass = selectedCharacter.class;
 
   const resourceType: ResourceType =
-    intelligence >= strength ? "mana" : strength > agility ? "rage" : "energy";
+    intelligence >= strength ? 'mana' : strength > agility ? 'rage' : 'energy';
   const maxResourceType: ResourceType =
-    resourceType === "mana"
-      ? "maxMana"
-      : resourceType === "rage"
-        ? "maxRage"
-        : "maxEnergy";
+    resourceType === 'mana' ? 'maxMana' : resourceType === 'rage' ? 'maxRage' : 'maxEnergy';
   const currentResource = selectedCharacter.stat[resourceType];
   const maxResource = selectedCharacter.stat[maxResourceType];
 
-  const statusEffects = ["Burning", "Shielded"];
+  const statusEffects = ['Burning', 'Shielded'];
   const effectIcons: Record<string, JSX.Element> = {
     Burning: <Flame className="text-red-500 w-4 h-4" aria-label="Burning" />,
-    Shielded: (
-      <Shield className="text-blue-300 w-4 h-4" aria-label="Shielded" />
-    ),
-    Blessed: (
-      <Sparkles className="text-yellow-300 w-4 h-4" aria-label="Blessed" />
-    ),
+    Shielded: <Shield className="text-blue-300 w-4 h-4" aria-label="Shielded" />,
+    Blessed: <Sparkles className="text-yellow-300 w-4 h-4" aria-label="Blessed" />,
     Cursed: <Skull className="text-purple-400 w-4 h-4" aria-label="Cursed" />,
   };
 
@@ -51,9 +35,9 @@ const CharacterHUD: FC = () => {
         <div>
           <h2 className="text-xl font-bold">{name}</h2>
           <p className="text-sm text-white/60">
-            Level {level}{" "}
+            Level {level}{' '}
             <span className="ml-2 text-xs text-white/40">
-              ({characterClass.name})
+              ({characterClass.name || 'Adventurer'})
             </span>
           </p>
         </div>
