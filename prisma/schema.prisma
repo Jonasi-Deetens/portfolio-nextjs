@@ -50,39 +50,38 @@ model Session {
 
 // Core game objects
 model Object {
-  id          Int      @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   name        String
   description String
   type        ObjectType
-  properties  Json     // Base properties for all instances
-  createdAt   DateTime @default(now())
-  
+  properties  Json // Base properties for all instances
+  createdAt   DateTime   @default(now())
+
   // Relations
   templateObjects TemplateObject[]
-  gameObjects    GameObject[]
+  gameObjects     GameObject[]
 }
 
 model TemplateObject {
-  id         Int      @id @default(autoincrement())
-  object     Object   @relation(fields: [objectId], references: [id])
+  id         Int    @id @default(autoincrement())
+  object     Object @relation(fields: [objectId], references: [id])
   objectId   Int
-  properties Json     // Override properties for this template instance
-  
+  properties Json // Override properties for this template instance
+
   tile   TemplateTile @relation(fields: [tileId], references: [id])
   tileId Int
 }
 
 model GameObject {
-  id         Int      @id @default(autoincrement())
-  object     Object   @relation(fields: [objectId], references: [id])
+  id         Int    @id @default(autoincrement())
+  object     Object @relation(fields: [objectId], references: [id])
   objectId   Int
-  properties Json     // Runtime properties for this game instance
-  
-  tile   Tile @relation(fields: [tileId], references: [id])
-  tileId Int
+  properties Json // Runtime properties for this game instance
+
+  tile      Tile     @relation(fields: [tileId], references: [id])
+  tileId    Int
   createdAt DateTime @default(now())
 }
-
 
 // Game enums
 enum TileType {
@@ -102,7 +101,7 @@ enum ObjectType {
   CHEST
   CONTAINER
   STORAGE
-  
+
   // Environment
   TREE
   ROCK
@@ -111,23 +110,23 @@ enum ObjectType {
   SIGN
   DOOR
   SHRINE
-  
+
   // Equipment
   WEAPON
   ARMOR
   ACCESSORY
-  
+
   // Items
   ITEM
   CONSUMABLE
   QUEST_ITEM
   CURRENCY
-  
+
   // Furniture
   FURNITURE
   CRAFTING_STATION
   DECORATION
-  
+
   // Interactive
   LEVER
   BUTTON
@@ -169,7 +168,7 @@ model CharacterClass {
   // Class progression
   levelUpBonuses Json // {hp, mana, strength, etc per level}
 
-  characters Character[]
+  characters         Character[]
   templateCharacters TemplateCharacter[]
 }
 
@@ -185,16 +184,16 @@ model StoryTemplate {
 }
 
 model TemplateMap {
-  id     Int    @id @default(autoincrement())
-  name   String
+  id          Int    @id @default(autoincrement())
+  name        String
   description String
-  width  Int
-  height Int
+  width       Int
+  height      Int
 
   storyTemplate StoryTemplate @relation(fields: [templateId], references: [id])
   templateId    Int
 
-  templateTiles      TemplateTile[]
+  templateTiles TemplateTile[]
 }
 
 model TemplateTile {
@@ -204,13 +203,14 @@ model TemplateTile {
   layer Int
   type  TileType
 
-  map             TemplateMap      @relation(fields: [mapId], references: [id])
-  mapId           Int
+  map   TemplateMap @relation(fields: [mapId], references: [id])
+  mapId Int
 
   templateObjects TemplateObject[]
-  characters      TemplateCharacter[]  @relation("TemplateCharacterTile")
+  characters      TemplateCharacter[] @relation("TemplateCharacterTile")
 
   createdAt DateTime @default(now())
+
   @@unique([x, y, layer, mapId])
 }
 
@@ -222,8 +222,8 @@ model TemplateCharacter {
   // Class related
   class       CharacterClass @relation(fields: [classId], references: [id])
   classId     Int
-  level       Int   @default(1)
-  skillPoints Int   @default(0)
+  level       Int            @default(1)
+  skillPoints Int            @default(0)
 
   stat   Stat? @relation("TemplateCharacterStat", fields: [statId], references: [id])
   statId Int?  @unique
@@ -246,7 +246,7 @@ model TemplateCharacter {
   tile   TemplateTile? @relation("TemplateCharacterTile", fields: [tileId], references: [id])
   tileId Int?
 
-  npcData    NPC?    @relation("TemplateNPCData")
+  npcData NPC? @relation("TemplateNPCData")
 
   // Timestamps
   createdAt       DateTime  @default(now())
@@ -283,7 +283,7 @@ model Map {
   playthrough   StoryPlaythrough @relation(fields: [playthroughId], references: [id])
   playthroughId Int
 
-  tiles      Tile[]
+  tiles Tile[]
 }
 
 model Tile {
@@ -312,8 +312,9 @@ model Character {
   // Class related
   class       CharacterClass @relation(fields: [classId], references: [id])
   classId     Int
-  level       Int   @default(1)
-  skillPoints Int   @default(0)
+  level       Int            @default(1)
+  skillPoints Int            @default(0)
+  behavior    Json? // NPC behavior
 
   // Core stats
   stat   Stat? @relation("CharacterStat", fields: [statId], references: [id])
@@ -387,7 +388,7 @@ model Stat {
   hpRegen   Float @default(1.0)
   manaRegen Float @default(1.0)
 
-  character Character? @relation("CharacterStat")
+  character         Character?         @relation("CharacterStat")
   templateCharacter TemplateCharacter? @relation("TemplateCharacterStat")
 }
 
@@ -421,11 +422,11 @@ model Player {
 }
 
 model NPC {
-  id          Int       @id @default(autoincrement())
-  character   Character @relation("NPCData", fields: [characterId], references: [id])
-  characterId Int       @unique
-  templateCharacter   TemplateCharacter @relation("TemplateNPCData", fields: [templateCharacterId], references: [id])
-  templateCharacterId Int       @unique
+  id                  Int                @id @default(autoincrement())
+  character           Character?         @relation("NPCData", fields: [characterId], references: [id])
+  characterId         Int?               @unique
+  templateCharacter   TemplateCharacter? @relation("TemplateNPCData", fields: [templateCharacterId], references: [id])
+  templateCharacterId Int?               @unique
 
   // AI behavior
   behavior   Json // Combat and movement patterns

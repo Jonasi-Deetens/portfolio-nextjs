@@ -1,9 +1,9 @@
 // server/routers/characterRouter.ts
-import { prisma } from '@/lib/prisma';
-import { Prisma, Stat } from '@prisma/client';
-import { initTRPC } from '@trpc/server';
-import { z } from 'zod';
-import { omit } from 'lodash';
+import { prisma } from "@/lib/prisma";
+import { Prisma, Stat } from "@prisma/client";
+import { initTRPC } from "@trpc/server";
+import { z } from "zod";
+import { omit } from "lodash";
 
 const t = initTRPC.create();
 
@@ -34,7 +34,7 @@ export const characterRouter = t.router({
         luck,
         classId,
       } = input;
-      console.log('input', input);
+      console.log("input", input);
 
       try {
         const storyTemplate = await prisma.storyTemplate.findUnique({
@@ -43,7 +43,7 @@ export const characterRouter = t.router({
         });
 
         if (!storyTemplate?.maps) {
-          throw new Error('Story template or maps not found');
+          throw new Error("Story template or maps not found");
         }
 
         // Step 1: Create Stat
@@ -58,7 +58,7 @@ export const characterRouter = t.router({
             luck,
           },
         });
-        console.log('userId', userId);
+        console.log("userId", userId);
 
         // Step 2: Create StoryPlaythrough with maps
         const playthrough = await prisma.storyPlaythrough.create({
@@ -68,7 +68,7 @@ export const characterRouter = t.router({
             user: { connect: { id: userId } },
             maps: {
               create: storyTemplate.maps.map((templateMap) => ({
-                ...omit(templateMap, 'id', 'templateId', 'templateTiles'),
+                ...omit(templateMap, "id", "templateId", "templateTiles"),
                 tiles: {
                   create: templateMap.templateTiles.map((tile) => ({
                     x: tile.x,
@@ -116,7 +116,7 @@ export const characterRouter = t.router({
             templateTiles: {
               include: {
                 templateObjects: { include: { object: true } },
-                characters: { include: { stat: true } },
+                characters: { include: { stat: true, tile: true } },
               },
             },
           },
@@ -153,11 +153,13 @@ export const characterRouter = t.router({
             tileMap.set(`${tile.x}:${tile.y}:${tile.layer}`, tile.id);
           }
 
-          const templateCharacters = templateMap.templateTiles.map((tile) => tile.characters);
+          const templateCharacters = templateMap.templateTiles.flatMap(
+            (tile) => tile.characters
+          );
           // Clone NPCs
-          for (const npc of templateCharacters) {
-            const stats = npc.stat as Stat;
-            const npcStat = await prisma.stat.create({
+          for (const char of templateCharacters) {
+            const stats = char.stat as Stat;
+            const charStat = await prisma.stat.create({
               data: {
                 hp: stats.hp,
                 maxHp: stats.maxHp,
@@ -169,20 +171,22 @@ export const characterRouter = t.router({
               },
             });
 
-            const tileId = tileMap.get(`${npc.x}:${npc.y}:${npc.layer}`) ?? null;
+            const tileId =
+              tileMap.get(
+                `${char.tile?.x}:${char.tile?.y}:${char.tile?.layer}`
+              ) ?? null;
             if (!tileId) continue;
 
             await prisma.character.create({
               data: {
-                name: npc.name,
+                name: char.name,
                 isPlayer: false,
-                stat: { connect: { id: npcStat.id } },
+                stat: { connect: { id: charStat.id } },
                 playthrough: { connect: { id: playthrough.id } },
-                map: { connect: { id: map.id } },
                 tile: { connect: { id: tileId } },
                 npcData: {
                   create: {
-                    behavior: npc.behavior ?? {},
+                    behavior: char.behavior ?? {},
                   },
                 },
                 class: { connect: { id: classId } },
@@ -213,33 +217,53 @@ export const characterRouter = t.router({
           playthroughId: playthrough.id,
         };
       } catch (error) {
-        console.error('❌ Error in createCharacter:', error);
+        console.error("❌ Error in createCharacter:", error);
         throw error;
       }
     }),
-  getPlayerCharacters: t.procedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
-    return await prisma.character.findMany({
-      where: {
-        isPlayer: true,
-        playerData: {
-          userId: input.id,
+  getPlayerCharacters: t.procedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      return await prisma.character.findMany({
+        where: {
+          isPlayer: true,
+          playerData: {
+            userId: input.id,
+          },
         },
-      },
-      include: {
-        stat: true,
-        class: true,
-        playthrough: {
-          include: {
-            maps: {
-              include: {
-                tiles: true,
+        include: {
+          stat: true,
+          class: true,
+          playthrough: {
+            include: {
+              maps: {
+                include: {
+                  tiles: true,
+                },
               },
             },
           },
+          npcData: true,
+          playerData: true,
+          tile: true,
         },
-        npcData: true,
-        playerData: true,
-      },
-    });
-  }),
+      });
+    }),
+  updatePosition: t.procedure
+    .input(
+      z.object({
+        characterId: z.number(),
+        tileId: z.number(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { characterId, tileId } = input;
+
+      return await prisma.character.update({
+        where: { id: characterId },
+        data: {
+          tileId: tileId,
+        },
+      });
+    }),
 });
