@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import { useField, useFormikContext } from "formik";
-import { CharacterCreateValues, SCharacterClass } from "../../../types/types";
-import { useEffect, useState } from "react";
-import { trpc } from "../../../../utils/trpc";
+import { useField, useFormikContext } from 'formik';
+import { CharacterCreateValues, SCharacterClass } from '../../../types/types';
+import { useEffect, useState } from 'react';
+import { trpc } from '../../../../utils/trpc';
+import { Button } from '../Buttons/Button';
 
 export const CLASS_BASE_STATS: Record<string, Record<string, number>> = {
   Warrior: {
@@ -29,33 +30,27 @@ export const CLASS_BASE_STATS: Record<string, Record<string, number>> = {
   },
 };
 
-export const STAT_FIELDS = [
-  "strength",
-  "agility",
-  "intelligence",
-  "charisma",
-  "luck",
-] as const;
+export const STAT_FIELDS = ['strength', 'agility', 'intelligence', 'charisma', 'luck'] as const;
 
-export const STAT_POINT_POOL = 20;
+export const STAT_POINT_POOL = 40;
 
 export const FormikStatControls = () => {
   const formik = useFormikContext<CharacterCreateValues>();
-  const [selectedClassField] = useField<number>("classId");
+  const [selectedClassField] = useField<number>('classId');
   const selectedClass = selectedClassField.value;
   const [baseStats, setBaseStats] = useState<Record<string, number>>({});
+  const [assignedPoints, setAssignedPoints] = useState(0);
 
   const classId = selectedClass;
-  console.log("classId", classId);
+  console.log('classId', classId);
   const classQuery = trpc.class.getClassById.useQuery(
     { id: selectedClass },
     { enabled: !!selectedClass }
   );
   const classData: SCharacterClass | null | undefined = classQuery.data;
-  console.log("classData", classData);
 
   useEffect(() => {
-    setBaseStats(CLASS_BASE_STATS[classData?.name ?? ""]);
+    setBaseStats(CLASS_BASE_STATS[classData?.name ?? '']);
   }, [classData?.name]);
 
   useEffect(() => {
@@ -65,30 +60,26 @@ export const FormikStatControls = () => {
     });
   }, [baseStats]);
 
-  const assignedPoints = STAT_FIELDS.reduce((total, stat) => {
-    if (!baseStats) return total;
-    console.log("baseStats", baseStats);
-    const base = baseStats[stat] ?? 0;
-    const current = formik.values[stat];
-    console.log("total", total, stat, base, current);
-    return total + (current - base);
-  }, 0);
+  useEffect(() => {
+    const points = STAT_FIELDS.reduce((total, stat) => {
+      const current = formik.values[stat];
+      return total + current;
+    }, 0);
+    setAssignedPoints(points);
+  }, [formik.values]);
 
   const pointsRemaining = STAT_POINT_POOL - assignedPoints;
 
-  const handleChange = (
-    stat: (typeof STAT_FIELDS)[number],
-    direction: "up" | "down"
-  ) => {
+  const handleChange = (stat: (typeof STAT_FIELDS)[number], direction: 'up' | 'down') => {
     const base = baseStats[stat];
     const current = formik.values[stat];
 
-    if (direction === "up") {
+    if (direction === 'up') {
       if (pointsRemaining <= 0 || current >= 20) return;
       formik.setFieldValue(stat, current + 1);
     }
 
-    if (direction === "down") {
+    if (direction === 'down') {
       if (current <= base) return;
       formik.setFieldValue(stat, current - 1);
     }
@@ -97,40 +88,37 @@ export const FormikStatControls = () => {
   return (
     <div className="flex flex-col justify-center w-full">
       <p className="text-white text-sm text-center mb-4">
-        Points remaining:{" "}
-        <span className="font-semibold">{pointsRemaining}</span>
+        Points remaining: <span className="font-semibold">{pointsRemaining}</span>
       </p>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {STAT_FIELDS.map((stat) => {
           const value = formik.values[stat];
-          const base = baseStats[stat] ?? 0;
+          const base = baseStats?.[stat] ?? 0;
 
           return (
             <div key={stat} className="flex flex-col items-center">
               <label className="capitalize text-sm mb-1">{stat}</label>
               <div className="flex items-center gap-2">
-                <button
+                <Button
                   type="button"
-                  onClick={() => handleChange(stat, "down")}
+                  onClick={() => handleChange(stat, 'down')}
                   disabled={value <= base}
                   className="bg-white/10 text-white px-2 py-1 rounded-lg border border-white/20 disabled:opacity-30 w-8 h-8"
                 >
                   –
-                </button>
+                </Button>
 
-                <span className="w-8 text-center text-white font-medium">
-                  {value}
-                </span>
+                <span className="w-8 text-center text-white font-medium">{value}</span>
 
-                <button
+                <Button
                   type="button"
-                  onClick={() => handleChange(stat, "up")}
+                  onClick={() => handleChange(stat, 'up')}
                   disabled={pointsRemaining <= 0 || value >= 20}
                   className="bg-white/10 text-white px-2 py-1 rounded-lg border border-white/20 disabled:opacity-30 w-8 h-8"
                 >
                   +
-                </button>
+                </Button>
               </div>
             </div>
           );

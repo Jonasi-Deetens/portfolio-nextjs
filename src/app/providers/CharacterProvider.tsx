@@ -1,16 +1,10 @@
 // context/CharacterContext.tsx
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
-import { SCharacterWithStat, STile } from "../types/types";
-import { useSession } from "next-auth/react";
-import { trpc } from "../../utils/trpc";
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { SCharacterWithStat, STile } from '../types/types';
+import { useSession } from 'next-auth/react';
+import { trpc } from '../../utils/trpc';
 
-type Direction = "up" | "down" | "left" | "right";
+type Direction = 'up' | 'down' | 'left' | 'right';
 
 type CharacterContextType = {
   characters: SCharacterWithStat[];
@@ -23,19 +17,14 @@ type CharacterContextType = {
   isValidMove: (x: number, y: number) => boolean;
 };
 
-const CharacterContext = createContext<CharacterContextType | undefined>(
-  undefined
-);
+const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
 
-export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const [characters, setCharacters] = useState<SCharacterWithStat[]>([]);
-  const [selectedCharacter, setSelectedCharacter] =
-    useState<SCharacterWithStat | null>(null);
+  const [selectedCharacter, setSelectedCharacter] = useState<SCharacterWithStat | null>(null);
   const utils = trpc.useUtils();
 
   const fetchCharacters = useCallback(async () => {
@@ -58,15 +47,13 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({
           setSelectedCharacter(updatedSelectedChar);
         }
       } else if (data.length > 0) {
-        const firstPlayerChar = (data as SCharacterWithStat[]).find(
-          (char) => char.isPlayer
-        );
+        const firstPlayerChar = (data as SCharacterWithStat[]).find((char) => char.isPlayer);
         if (firstPlayerChar) {
           setSelectedCharacter(firstPlayerChar);
         }
       }
     } catch (err) {
-      console.error("Failed to fetch characters:", err);
+      console.error('Failed to fetch characters:', err);
       setIsError(true);
     } finally {
       setIsLoading(false);
@@ -79,7 +66,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      if (status === "authenticated") {
+      if (status === 'authenticated') {
         await fetchCharacters();
       }
     };
@@ -95,16 +82,13 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({
     if (x < 0 || x >= currentMap.width || y < 0 || y >= currentMap.height) {
       return false;
     }
-    const targetTile = currentMap.tiles.find(
-      (t) => t.x === x && t.y === y && t.layer === 0
-    );
-    const unwalkableTiles = ["WALL", "WATER", "MOUNTAIN"];
+    const targetTile = currentMap.tiles.find((t) => t.x === x && t.y === y && t.layer === 0);
+    const unwalkableTiles = ['WALL', 'WATER', 'MOUNTAIN'];
     return targetTile ? !unwalkableTiles.includes(targetTile.type) : false;
   };
 
   const moveCharacter = async (direction: Direction) => {
-    if (!selectedCharacter?.tile || !selectedCharacter.playthrough?.maps?.[0])
-      return;
+    if (!selectedCharacter?.tile || !selectedCharacter.playthrough?.maps?.[0]) return;
 
     const currentX = selectedCharacter.tile.x;
     const currentY = selectedCharacter.tile.y;
@@ -114,16 +98,16 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({
     let newY = currentY;
 
     switch (direction) {
-      case "up":
+      case 'up':
         newY -= 1;
         break;
-      case "down":
+      case 'down':
         newY += 1;
         break;
-      case "left":
+      case 'left':
         newX -= 1;
         break;
-      case "right":
+      case 'right':
         newX += 1;
         break;
     }
@@ -172,7 +156,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useCharacter = () => {
   const context = useContext(CharacterContext);
   if (!context) {
-    throw new Error("useCharacter must be used within a CharacterProvider");
+    throw new Error('useCharacter must be used within a CharacterProvider');
   }
   return context;
 };

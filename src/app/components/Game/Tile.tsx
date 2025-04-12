@@ -1,5 +1,5 @@
-import { memo } from "react";
-import { STile } from "../../types/types";
+import { memo } from 'react';
+import { STile } from '../../types/types';
 import {
   Trees,
   Mountain,
@@ -8,7 +8,9 @@ import {
   User,
   EarthIcon,
   DropletIcon,
-} from "lucide-react";
+  DoorClosedIcon,
+  WavesLadderIcon,
+} from 'lucide-react';
 
 const tileTypeToIcon = {
   GRASS: EarthIcon,
@@ -18,6 +20,8 @@ const tileTypeToIcon = {
   FOREST: Trees,
   ROAD: Circle,
   WALL: BoxIcon,
+  STAIRS_UP: WavesLadderIcon,
+  STAIRS_DOWN: BoxIcon,
   //   CAVE_FLOOR: Circle,
   CAVE_WALL: BoxIcon,
   CHEST: BoxIcon,
@@ -66,22 +70,13 @@ const tileTypeToIcon = {
   LEVER: BoxIcon,
   BUTTON: BoxIcon,
   LIGHT_SOURCE: BoxIcon,
+  DOORWAY: DoorClosedIcon,
 };
 
 const Tile = memo(
-  ({
-    tile,
-    isPlayer,
-    className,
-  }: {
-    tile: STile | null;
-    isPlayer: boolean;
-    className: string;
-  }) => {
+  ({ tile, isPlayer, className }: { tile: STile | null; isPlayer: boolean; className: string }) => {
     if (!tile) {
-      return (
-        <div className="w-full aspect-square flex items-center justify-center" />
-      );
+      return <div className={`${className} relative`} />;
     }
 
     if (tile.id === 166) console.log(tile);
@@ -90,13 +85,21 @@ const Tile = memo(
       : tileTypeToIcon[tile.objects?.[0]?.object.type || tile.type];
 
     return (
-      <div className={className}>
-        {IconComponent && <IconComponent className="w-5 h-5" />}
+      <div className={`${className} relative`}>
+        {IconComponent && (
+          <div
+            className={`absolute inset-0 flex items-center justify-center ${
+              isPlayer ? 'transition-transform duration-200 ease-in-out' : ''
+            }`}
+          >
+            <IconComponent className={`w-5 h-5 ${isPlayer ? 'text-blue-400' : ''}`} />
+          </div>
+        )}
       </div>
     );
   }
 );
 
-Tile.displayName = "Tile";
+Tile.displayName = 'Tile';
 
 export default Tile;

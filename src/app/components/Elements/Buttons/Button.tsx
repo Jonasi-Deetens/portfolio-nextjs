@@ -1,19 +1,21 @@
-"use client";
+'use client';
 
-import { FC, ReactNode } from "react";
+import { FC, ReactNode } from 'react';
 
 interface ButtonProps {
   children: ReactNode;
   className?: string;
-  type?: "submit" | "reset" | "button" | undefined;
+  disabled?: boolean;
+  type?: 'submit' | 'reset' | 'button' | undefined;
   onClick?: () => void;
 }
 
 export const Button: FC<ButtonProps> = ({
   children,
   className,
-  type = "submit",
+  type = 'submit',
   onClick,
+  disabled,
 }) => {
   return (
     <button
@@ -40,6 +42,7 @@ export const Button: FC<ButtonProps> = ({
 
         ${className}
       `}
+      disabled={disabled}
     >
       {children}
     </button>

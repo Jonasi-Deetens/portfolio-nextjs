@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { withAuth } from "../components/Auth/withAuth";
-import { Button } from "../components/Elements/Buttons/Button";
-import CharacterHUD from "../components/Hud/CharacterHud";
-import { useCharacter } from "../providers/CharacterProvider";
-import { useMap } from "../providers/MapProvider";
-import { useEffect, useCallback, useMemo, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { withAuth } from '../components/Auth/withAuth';
+import { Button } from '../components/Elements/Buttons/Button';
+import CharacterHUD from '../components/Hud/CharacterHud';
+import { useCharacter } from '../providers/CharacterProvider';
+import { useMap } from '../providers/MapProvider';
+import { useEffect, useCallback, useMemo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
-import Tile from "../components/Game/Tile";
+import Tile from '../components/Game/Tile';
 
 const GamePage = () => {
   const router = useRouter();
@@ -17,7 +17,7 @@ const GamePage = () => {
   const moveInProgress = useRef(false);
 
   const handleMove = useCallback(
-    async (direction: "up" | "down" | "left" | "right") => {
+    async (direction: 'up' | 'down' | 'left' | 'right') => {
       if (moveInProgress.current) return;
       moveInProgress.current = true;
 
@@ -34,29 +34,28 @@ const GamePage = () => {
     [moveCharacter]
   );
 
-  // Memoize keyboard event handler
   const handleKeyPress = useCallback(
     (event: KeyboardEvent) => {
       switch (event.key) {
-        case "ArrowUp":
-        case "w":
+        case 'ArrowUp':
+        case 'w':
           event.preventDefault();
-          handleMove("up");
+          handleMove('up');
           break;
-        case "ArrowDown":
-        case "s":
+        case 'ArrowDown':
+        case 's':
           event.preventDefault();
-          handleMove("down");
+          handleMove('down');
           break;
-        case "ArrowLeft":
-        case "a":
+        case 'ArrowLeft':
+        case 'a':
           event.preventDefault();
-          handleMove("left");
+          handleMove('left');
           break;
-        case "ArrowRight":
-        case "d":
+        case 'ArrowRight':
+        case 'd':
           event.preventDefault();
-          handleMove("right");
+          handleMove('right');
           break;
       }
     },
@@ -64,22 +63,18 @@ const GamePage = () => {
   );
 
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyPress);
+    window.addEventListener('keydown', handleKeyPress);
     return () => {
-      window.removeEventListener("keydown", handleKeyPress);
+      window.removeEventListener('keydown', handleKeyPress);
     };
   }, [handleKeyPress]);
 
-  // Memoize the grid rendering
   const renderGrid = useMemo(() => {
     return visibleTiles.flat().map((tile, index) => {
       const isPlayer =
-        tile?.x === selectedCharacter?.tile?.x &&
-        tile?.y === selectedCharacter?.tile?.y;
+        tile?.x === selectedCharacter?.tile?.x && tile?.y === selectedCharacter?.tile?.y;
 
-      const tileClassName = `w-16 h-16 ${
-        isPlayer ? "bg-blue-500" : "bg-gray-700"
-      } flex items-center justify-center`;
+      const tileClassName = `w-16 h-16 flex items-center justify-center`;
 
       return (
         <Tile
@@ -96,9 +91,7 @@ const GamePage = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="text-xl mb-4">No character selected</div>
-        <Button onClick={() => router.push("/character-select")}>
-          Go to Character Select
-        </Button>
+        <Button onClick={() => router.push('/character-select')}>Go to Character Select</Button>
       </div>
     );
   }
@@ -121,7 +114,7 @@ pointer-events-none z-0 floating-mist"
       <div className="flex justify-center items-center min-h-screen">
         <div className="bg-black/30 backdrop-blur-sm rounded-lg border border-white/10">
           <div
-            className="grid gap-0"
+            className="grid gap-0 transition-all duration-200 ease-in-out"
             style={{ gridTemplateColumns: `repeat(${VIEWPORT_SIZE}, 64px)` }}
           >
             {renderGrid}

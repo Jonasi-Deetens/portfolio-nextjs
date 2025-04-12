@@ -11,7 +11,7 @@ import {
   Prisma,
   GameObject,
   Object,
-} from "@prisma/client";
+} from '@prisma/client';
 
 type Json = Prisma.JsonValue;
 
@@ -19,10 +19,8 @@ export type TrpcError = {
   message: string;
 };
 
-// Helper type for basic date serialization
 type SerializeDateValue<T> = T extends Date ? string : T;
 
-// More specific type for our nested structures
 type SerializeDates<T> = {
   [K in keyof T]: T[K] extends Date
     ? string
@@ -33,26 +31,20 @@ type SerializeDates<T> = {
         : T[K];
 };
 
-// Base serialization for date-containing objects
 type SerializeDateFields<T> = {
-  [K in keyof T]: T[K] extends Date
-    ? string
-    : T[K] extends Date | null
-      ? string | null
-      : T[K];
+  [K in keyof T]: T[K] extends Date ? string : T[K] extends Date | null ? string | null : T[K];
 };
 
-// Type for Map with serialized dates
 export type SMap = SerializeDateFields<Map> & {
   tiles: SerializeDateFields<Tile>[];
 };
 
-// Type for StoryPlaythrough with serialized dates
 export type SPlaythrough = SerializeDateFields<StoryPlaythrough> & {
   maps: SMap[];
 };
 
 export type SGameObject = SerializeDateFields<GameObject>;
+
 export type SObject = SerializeDateFields<Object>;
 
 export type STile = SerializeDateFields<Tile> & {
@@ -142,18 +134,18 @@ export type CharacterCreateValues = {
 
 //RESOURCE
 export type ResourceType =
-  | "hp"
-  | "maxHp"
-  | "mana"
-  | "maxMana"
-  | "rage"
-  | "maxRage"
-  | "energy"
-  | "maxEnergy"
-  | "stamina"
-  | "maxStamina"
-  | "focus"
-  | "maxFocus"
-  | "xp"
-  | "spirit"
-  | "maxSpirit";
+  | 'hp'
+  | 'maxHp'
+  | 'mana'
+  | 'maxMana'
+  | 'rage'
+  | 'maxRage'
+  | 'energy'
+  | 'maxEnergy'
+  | 'stamina'
+  | 'maxStamina'
+  | 'focus'
+  | 'maxFocus'
+  | 'xp'
+  | 'spirit'
+  | 'maxSpirit';
